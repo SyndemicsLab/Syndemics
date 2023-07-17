@@ -1,2 +1,2 @@
 # Syndemics
-R package for commonly used SyndemicsLab functions
+Collection of functions developed by the Boston Medical Center Syndemics Lab
