@@ -14,19 +14,26 @@
 #' @param data Dataframe: A dataframe containing a frequency column and binary columns indicating involvement in the given database
 #' @param freq.column Column: A column containing the frequency of observed combinations
 #' @param binary.variables List of Columns: List containing columns of binary variables indicating involvement in the given database
-#' @param method String: Selection for the spatial capture-recapture method - either poisson or good-turing
-#' @param corr.threshold Numeric: Threshold for forcing interaction term between binary columns. Default is 0.2
-#' @param formula Formula: Allows definition of custom formula object for poisson regression
+#' @param method String: Selection for the spatial capture-recapture method - either poisson, good-turing, or negbin
+#' @param formula.selection String: Selection for formula decision when \code{method} is poisson or negbin - either aic or corr
+#' @param corr.threshold Numeric: Threshold for forcing interaction term between binary columns. Only applicable when \code{formula.selection} is \code{"corr"}
+#' @param formula Formula: Allows definition of custom formula object for poisson regression. In the case of a specified formula, both \code{formula.selection} methods will produce the same results
+#'
+#' @importFrom MASS glm.nb
 #'
 #' @export
 
-crc <- function(data, freq.column, binary.variables, method = "poisson", corr.threshold = 0.2, formula = NULL){
+crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "aic", corr.threshold = 0.2, formula = NULL){
   dt <- data.table::as.data.table(data)
 
   if(is.null(formula)){
-    form <- corr_formula(corr, corr.threshold, freq.column)
+    if(formula.selection == "corr"){
+      form <- corr_formula(corr, corr.threshold, freq.column)
+    } else if(formula.selection == "aic"){
+      form <- formula_list(freq.column, binary.variables)
+    }
   } else if(!is.formula(formula)){
-    stop("Expected Formula Object")
+    stop("Expected Formula Object when Specifying Formula")
   } else form <- formula
 
   # Correlation Testing ===============================
@@ -40,19 +47,100 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", corr.th
 
   #Poisson Modeling ===================================
   if(method == "poisson"){
-    tmp <- poisson_regression(dt, form)
-    ci_intercept <- confint(tmp)[1, ]
+    if(formula.selection == "aic"){
+      results <- list()
+      for(i in seq_along(form)){
+        result <- tryCatch({
+          model <- poisson_regression(dt, form[[i]])
 
-    formula_string = as.character(form)
+          intercept <- exp(coef(model)["(Intercept)"])
+          aic <- AIC(model)
 
-    model <- list(
-      model = method,
-      formula = formula_string,
-      summary = summary(tmp),
-      estimate = exp(coef(tmp)[1]),
-      lower_ci = exp(ci_intercept[1]),
-      upper_ci = exp(ci_intercept[2])
-    )
+          ci <- confint(model, "(Intercept)", level = 0.95)
+          lower_ci <- exp(ci[1])
+          upper_ci <- exp(ci[2])
+
+          list(formula = as.character(form[[i]]), exp_intercept = exp_intercept, AIC = aic,
+               lower_ci = lower_ci, upper_ci = upper_ci)
+
+        }, error = function(e) {
+          list(formula = as.character(form[[i]]), exp_intercept = NA, AIC = NA,
+               lower_ci = NA, upper_ci = NA, error = toString(e$message))
+        })
+
+        results[[i]] <- result
+      }
+      model <- do.call(rbind, lapply(results, function(x) as.data.frame(t(unlist(x)))))
+
+      model$estimate <- as.numeric(as.character(model$intercept))
+      model$AIC <- as.numeric(as.character(model$AIC))
+      model$lower_ci <- as.numeric(as.character(model$lower_ci))
+      model$upper_ci <- as.numeric(as.character(model$upper_ci))
+
+    } else if(formula.selection == "corr"){
+      tmp <- poisson_regression(dt, form)
+      ci_intercept <- exp(confint(tmp)[1, ])
+
+      formula_string = as.character(form)
+
+      model <- list(
+        model = method,
+        formula = formula_string,
+        summary = summary(tmp),
+        estimate = exp(coef(tmp)[1]),
+        lower_ci = exp(ci_intercept[1]),
+        upper_ci = exp(ci_intercept[2])
+      )
+    }
+  }
+
+  #Neg-Bin Modeling =====================================
+  if(method == "negbin"){
+    if(formula.selection == "aic"){
+      results <- list()
+      for(i in seq_along(form)){
+        result <- tryCatch({
+          model <- MASS::glm.nb(data = dt, formula = form[[i]])
+
+          intercept <- exp(coef(model)["(Intercept)"])
+          aic <- AIC(model)
+
+          ci <- confint(model, "(Intercept)", level = 0.95)
+          lower_ci <- exp(ci[1])
+          upper_ci <- exp(ci[2])
+
+          list(formula = as.character(form[[i]]), exp_intercept = exp_intercept, AIC = aic,
+               lower_ci = lower_ci, upper_ci = upper_ci)
+
+        }, error = function(e) {
+          list(formula = as.character(form[[i]]), exp_intercept = NA, AIC = NA,
+               lower_ci = NA, upper_ci = NA, error = toString(e$message))
+        })
+
+        results[[i]] <- result
+      }
+      model <- do.call(rbind, lapply(results, function(x) as.data.frame(t(unlist(x)))))
+
+      model$estimate <- as.numeric(as.character(model$intercept))
+      model$AIC <- as.numeric(as.character(model$AIC))
+      model$lower_ci <- as.numeric(as.character(model$lower_ci))
+      model$upper_ci <- as.numeric(as.character(model$upper_ci))
+
+    } else if(formula.selection == "corr"){
+      tmp <- MASS::glm.nb(formula = form, data = dt)
+      ci_intercept <- exp(confint(tmp)[1, ])
+
+      formula_string = as.character(form)
+
+      model <- list(
+        model = method,
+        formula = formula_string,
+        summary = summary(tmp),
+        estimate = exp(coef(tmp)[1]),
+        lower_ci = exp(ci_intercept[1]),
+        upper_ci = exp(ci_intercept[2])
+      )
+    }
   }
 
   #Good-Turing Modeling =================================
