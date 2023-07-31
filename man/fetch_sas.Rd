@@ -2,10 +2,12 @@
 % Please edit documentation in R/fetch_sas.R
 \name{fetch_sas}
 \alias{fetch_sas}
-\title{Fetches most recent .SAS files for MA DPH work and saves them to a SAS/ subdirectory}
+\title{MA DPH PHDW Script Pull
+Fetches most recent .SAS files for MA DPH work and saves them to a SAS/ subdirectory}
 \usage{
 fetch_sas()
 }
 \description{
+MA DPH PHDW Script Pull
 Fetches most recent .SAS files for MA DPH work and saves them to a SAS/ subdirectory
 }

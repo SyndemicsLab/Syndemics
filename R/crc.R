@@ -36,7 +36,7 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
     stop("Expected Formula Object when Specifying Formula")
   } else form <- formula
 
-  # Correlation Testing ===============================
+# Correlation Testing ======================
   data_expansion <- data.table()
   data_expansion <- dt[rep(1:.N, get(freq.column))][, (freq.column) := NULL]
 
@@ -45,7 +45,7 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
   corr_plot <- ggcorrplot::ggcorrplot(corr, type = "upper", lab = TRUE) +
     ggplot2::theme(legend.position = "none")
 
-  #Poisson Modeling ===================================
+# Poisson Modeling =========================
   if(method == "poisson"){
     if(formula.selection == "aic"){
       results <- list()
@@ -53,48 +53,45 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         result <- tryCatch({
           model <- poisson_regression(dt, form[[i]])
 
-          intercept <- exp(coef(model)["(Intercept)"])
-          aic <- AIC(model)
+          exp_intercept <- unname(round(exp(coef(model)["(Intercept)"]), 2))
+          aic <- round(AIC(model), 2)
 
-          ci <- confint(model, "(Intercept)", level = 0.95)
-          lower_ci <- exp(ci[1])
-          upper_ci <- exp(ci[2])
+          ci <- suppressMessages(confint(model, "(Intercept)", level = 0.95))
+          lower_ci <- unname(round(exp(ci[1]), 2))
+          upper_ci <- unname(round(exp(ci[2]), 2))
 
-          list(formula = as.character(form[[i]]), exp_intercept = exp_intercept, AIC = aic,
+          list(formula = as.character(deparse(form[[i]])), estimate = exp_intercept, AIC = aic,
                lower_ci = lower_ci, upper_ci = upper_ci)
 
         }, error = function(e) {
-          list(formula = as.character(form[[i]]), exp_intercept = NA, AIC = NA,
+          list(formula = as.character(deparse(form[[i]])), estimate = NA, AIC = NA,
                lower_ci = NA, upper_ci = NA, error = toString(e$message))
         })
 
         results[[i]] <- result
       }
       model <- do.call(rbind, lapply(results, function(x) as.data.frame(t(unlist(x)))))
-
-      model$estimate <- as.numeric(as.character(model$intercept))
-      model$AIC <- as.numeric(as.character(model$AIC))
-      model$lower_ci <- as.numeric(as.character(model$lower_ci))
-      model$upper_ci <- as.numeric(as.character(model$upper_ci))
+      model <- model[order(model$AIC), ]
 
     } else if(formula.selection == "corr"){
       tmp <- poisson_regression(dt, form)
-      ci_intercept <- exp(confint(tmp)[1, ])
+      ci_intercept <- suppressMessages(exp(confint(tmp)[1, ]))
 
-      formula_string = as.character(form)
+      formula_string = as.character(deparse(form))
 
       model <- list(
+        corr_matrix = corr,
+        corr_plot = corr_plot,
         model = method,
         formula = formula_string,
         summary = summary(tmp),
-        estimate = exp(coef(tmp)[1]),
-        lower_ci = exp(ci_intercept[1]),
-        upper_ci = exp(ci_intercept[2])
+        estimate = round(exp(coef(tmp)[1]), 2),
+        lower_ci = unname(round(exp(ci_intercept[1]), 2)),
+        upper_ci = unname(round(exp(ci_intercept[2]), 2))
       )
     }
   }
-
-  #Neg-Bin Modeling =====================================
+# Neg-Bin Modeling =========================
   if(method == "negbin"){
     if(formula.selection == "aic"){
       results <- list()
@@ -102,60 +99,60 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         result <- tryCatch({
           model <- MASS::glm.nb(data = dt, formula = form[[i]])
 
-          intercept <- exp(coef(model)["(Intercept)"])
-          aic <- AIC(model)
+          exp_intercept <- unname(round(exp(coef(model)["(Intercept)"]), 2))
+          aic <- round(AIC(model), 2)
 
-          ci <- confint(model, "(Intercept)", level = 0.95)
-          lower_ci <- exp(ci[1])
-          upper_ci <- exp(ci[2])
+          ci <- suppressMessages(confint(model, "(Intercept)", level = 0.95))
+          lower_ci <- unname(round(exp(ci[1]), 2))
+          upper_ci <- unname(round(exp(ci[2]), 2))
 
-          list(formula = as.character(form[[i]]), exp_intercept = exp_intercept, AIC = aic,
+          list(formula = as.character(deparse(form[[i]])), estimate = exp_intercept, AIC = aic,
                lower_ci = lower_ci, upper_ci = upper_ci)
 
         }, error = function(e) {
-          list(formula = as.character(form[[i]]), exp_intercept = NA, AIC = NA,
+          list(formula = as.character(deparse(form[[i]])), estimate = NA, AIC = NA,
                lower_ci = NA, upper_ci = NA, error = toString(e$message))
         })
 
         results[[i]] <- result
       }
       model <- do.call(rbind, lapply(results, function(x) as.data.frame(t(unlist(x)))))
-
-      model$estimate <- as.numeric(as.character(model$intercept))
-      model$AIC <- as.numeric(as.character(model$AIC))
-      model$lower_ci <- as.numeric(as.character(model$lower_ci))
-      model$upper_ci <- as.numeric(as.character(model$upper_ci))
+      model <- model[order(model$AIC), ]
 
     } else if(formula.selection == "corr"){
       tmp <- MASS::glm.nb(formula = form, data = dt)
-      ci_intercept <- exp(confint(tmp)[1, ])
+      ci_intercept <- suppressMessages(exp(confint(tmp)[1, ]))
 
-      formula_string = as.character(form)
+      formula_string = as.character(deparse(form))
 
       model <- list(
+        corr_matrix = corr,
+        corr_plot = corr_plot,
         model = method,
         formula = formula_string,
         summary = summary(tmp),
-        estimate = exp(coef(tmp)[1]),
-        lower_ci = exp(ci_intercept[1]),
-        upper_ci = exp(ci_intercept[2])
+        estimate = round(exp(coef(tmp)[1]), 2),
+        lower_ci = unname(round(exp(ci_intercept[1]), 2)),
+        upper_ci = unname(round(exp(ci_intercept[2]), 2))
       )
     }
   }
-
-  #Good-Turing Modeling =================================
+# Good-Turing Modeling =======================
   if(method == "good-turing"){
     gt <- good_turing(data = dt, freq.column, binary.variables)
 
     model <- list(
+      corr_matrix = corr,
+      corr_plot = corr_plot,
       model = method,
       formula = NULL,
       summary = NULL,
-      estimate = gt$estimated_unseen,
-      lower_ci = gt$confidence_interval$conf.low,
-      upper_ci = gt$confidence_interval$conf.high
+      estimate = round(gt$estimated_unseen, 2),
+      lower_ci = round(gt$confidence_interval$conf.low, 2),
+      upper_ci = round(gt$confidence_interval$conf.high, 2)
     )
   }
 
   return(model)
 }
+

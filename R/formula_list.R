@@ -6,22 +6,28 @@
 #'
 #' @export
 
-formula_list <- function(y, variables){
+formula_list <- function(y, variables) {
   n <- length(variables)
-  formulae <- list()
 
-  for(i in 1:n){
+  base_formula <- paste(y, "~", paste(variables, collapse = " + "))
+  formulae <- list(as.formula(base_formula))
+
+  for(i in 2:n) {
     combinations <- combn(variables, i, simplify = FALSE)
-
-    for(combination in combinations){
+    for(combination in combinations) {
       interaction_terms <- paste(combination, collapse = "*")
 
-      formula_without_interaction <- as.formula(paste(y, "~", paste(combination, collapse = " + ")))
-      formula_with_interaction <- as.formula(paste(y, "~", interaction_terms, "+", paste(combination, collapse = " + ")))
-      formula_only_interaction <- as.formula(paste(y, "~", interaction_terms))
+      remaining_vars <- setdiff(variables, combination)
+      remaining_string <- if(length(remaining_vars) > 0) paste(paste(remaining_vars, collapse = " + "), "+") else ""
+      modified_base_formula <- paste(y, "~", remaining_string, interaction_terms)
 
-      formulae <- c(formulae, formula_without_interaction, formula_with_interaction, formula_only_interaction)
+      interaction_formula <- paste(base_formula, "+", interaction_terms)
+
+      formulae <- c(formulae, as.formula(interaction_formula), as.formula(modified_base_formula))
     }
   }
+
   return(formulae)
 }
+
+formula_list(y = "N_ID", variables = c("A", "B", "C", "D", "E", "F"))
