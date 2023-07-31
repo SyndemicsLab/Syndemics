@@ -26,6 +26,14 @@
 crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "aic", corr.threshold = 0.2, formula = NULL){
   dt <- data.table::as.data.table(data)
 
+  data_expansion <- data.table()
+  data_expansion <- dt[rep(1:.N, get(freq.column))][, (freq.column) := NULL]
+
+  corr <- cor(data_expansion)
+
+  corr_plot <- ggcorrplot::ggcorrplot(corr, type = "upper", lab = TRUE) +
+    ggplot2::theme(legend.position = "none")
+
   if(is.null(formula)){
     if(formula.selection == "corr"){
       form <- corr_formula(corr, corr.threshold, freq.column)
@@ -36,48 +44,42 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
     stop("Expected Formula Object when Specifying Formula")
   } else form <- formula
 
-# Correlation Testing ======================
-  data_expansion <- data.table()
-  data_expansion <- dt[rep(1:.N, get(freq.column))][, (freq.column) := NULL]
-
-  corr <- cor(data_expansion)
-
-  corr_plot <- ggcorrplot::ggcorrplot(corr, type = "upper", lab = TRUE) +
-    ggplot2::theme(legend.position = "none")
-
-# Poisson Modeling =========================
   if(method == "poisson"){
     if(formula.selection == "aic"){
       results <- list()
       for(i in seq_along(form)){
         result <- tryCatch({
-          model <- poisson_regression(dt, form[[i]])
+          model <- glm(form[[i]], data = dt, family = "poisson")
 
-          exp_intercept <- unname(round(exp(coef(model)["(Intercept)"]), 2))
-          aic <- round(AIC(model), 2)
+          intercept <- exp(coef(model)["(Intercept)"])
+          aic <- AIC(model)
 
           ci <- suppressMessages(confint(model, "(Intercept)", level = 0.95))
-          lower_ci <- unname(round(exp(ci[1]), 2))
-          upper_ci <- unname(round(exp(ci[2]), 2))
+          lower_ci <- exp(ci[1])
+          upper_ci <- exp(ci[2])
 
-          list(formula = as.character(deparse(form[[i]])), estimate = exp_intercept, AIC = aic,
-               lower_ci = lower_ci, upper_ci = upper_ci)
+          data.frame(formula = paste(deparse(form[[i]]), collapse = " "),
+                     estimate = round(intercept, 2), AIC = round(aic, 2),
+                     lower_ci = unname(round(lower_ci, 2)), upper_ci = unname(round(upper_ci, 2)), error = NA,
+                     row.names = NULL)
 
         }, error = function(e) {
-          list(formula = as.character(deparse(form[[i]])), estimate = NA, AIC = NA,
-               lower_ci = NA, upper_ci = NA, error = toString(e$message))
+          data.frame(formula = paste(deparse(form[[i]]), collapse = " "),
+                     estimate = NA, AIC = NA,
+                     lower_ci = NA, upper_ci = NA, error = toString(e$message),
+                     row.names = NULL)
         })
 
         results[[i]] <- result
       }
-      model <- do.call(rbind, lapply(results, function(x) as.data.frame(t(unlist(x)))))
+      model <- do.call(rbind, results)
       model <- model[order(model$AIC), ]
 
     } else if(formula.selection == "corr"){
-      tmp <- poisson_regression(dt, form)
+      tmp <- glm(formula = form, data = dt, family = "poisson")
       ci_intercept <- suppressMessages(exp(confint(tmp)[1, ]))
 
-      formula_string = as.character(deparse(form))
+      formula_string = paste(deparse(form), collapse = " ")
 
       model <- list(
         corr_matrix = corr,
@@ -91,39 +93,43 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
       )
     }
   }
-# Neg-Bin Modeling =========================
+
   if(method == "negbin"){
     if(formula.selection == "aic"){
       results <- list()
       for(i in seq_along(form)){
         result <- tryCatch({
-          model <- MASS::glm.nb(data = dt, formula = form[[i]])
+          model <- MASS::glm.nb(formula = form[[i]], data = dt)
 
-          exp_intercept <- unname(round(exp(coef(model)["(Intercept)"]), 2))
-          aic <- round(AIC(model), 2)
+          intercept <- exp(coef(model)["(Intercept)"])
+          aic <- AIC(model)
 
           ci <- suppressMessages(confint(model, "(Intercept)", level = 0.95))
-          lower_ci <- unname(round(exp(ci[1]), 2))
-          upper_ci <- unname(round(exp(ci[2]), 2))
+          lower_ci <- exp(ci[1])
+          upper_ci <- exp(ci[2])
 
-          list(formula = as.character(deparse(form[[i]])), estimate = exp_intercept, AIC = aic,
-               lower_ci = lower_ci, upper_ci = upper_ci)
+          data.frame(formula = paste(deparse(form[[i]]), collapse = " "),
+                     estimate = round(intercept, 2), AIC = round(aic, 2),
+                     lower_ci = unname(round(lower_ci, 2)), upper_ci = unname(round(upper_ci, 2)), error = NA,
+                     row.names = NULL)
 
         }, error = function(e) {
-          list(formula = as.character(deparse(form[[i]])), estimate = NA, AIC = NA,
-               lower_ci = NA, upper_ci = NA, error = toString(e$message))
+          data.frame(formula = paste(deparse(form[[i]]), collapse = " "),
+                     estimate = NA, AIC = NA,
+                     lower_ci = NA, upper_ci = NA, error = toString(e$message),
+                     row.names = NULL)
         })
 
         results[[i]] <- result
       }
-      model <- do.call(rbind, lapply(results, function(x) as.data.frame(t(unlist(x)))))
+      model <- do.call(rbind, results)
       model <- model[order(model$AIC), ]
 
     } else if(formula.selection == "corr"){
       tmp <- MASS::glm.nb(formula = form, data = dt)
       ci_intercept <- suppressMessages(exp(confint(tmp)[1, ]))
 
-      formula_string = as.character(deparse(form))
+      formula_string = paste(deparse(form), collapse = " ")
 
       model <- list(
         corr_matrix = corr,
@@ -137,7 +143,7 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
       )
     }
   }
-# Good-Turing Modeling =======================
+
   if(method == "good-turing"){
     gt <- good_turing(data = dt, freq.column, binary.variables)
 
@@ -155,4 +161,3 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
 
   return(model)
 }
-
