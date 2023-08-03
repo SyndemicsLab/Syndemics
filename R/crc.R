@@ -87,7 +87,7 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         model = method,
         formula = formula_string,
         summary = summary(tmp),
-        estimate = round(exp(coef(tmp)[1]), 2),
+        estimate = unname(round(exp(coef(tmp)["(Intercept)"]), 2)),
         lower_ci = unname(round(exp(ci_intercept[1]), 2)),
         upper_ci = unname(round(exp(ci_intercept[2]), 2))
       )
@@ -137,7 +137,7 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         model = method,
         formula = formula_string,
         summary = summary(tmp),
-        estimate = round(exp(coef(tmp)[1]), 2),
+        estimate = unname(round(exp(coef(tmp)["(Intercept)"]), 2)),
         lower_ci = unname(round(exp(ci_intercept[1]), 2)),
         upper_ci = unname(round(exp(ci_intercept[2]), 2))
       )
@@ -160,11 +160,11 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
   }
 
   if(method == "DBCount"){
-    dbc <- setDT(data)[, .(dbcnt = rowSums(.SD)), by = binary.variables, .SDcols = binary.variables
-                       ][, .(N = sum(get(freq.column))), by = dbcnt]
+    dbc <- setDT(dt)[, .(dbcnt = rowSums(.SD)), by = c(binary.variables, freq.column), .SDcols = binary.variables
+                     ][, .(N = sum(get(freq.column))), by = dbcnt]
 
     dbc_model <- glm(N ~ dbcnt, data = dbc, family = "poisson")
-    ci <- suppressMessages(confint(dbc_model, "(Intercept)", level = 0.95))
+    ci_intercept <- suppressMessages(confint(dbc_model, "(Intercept)", level = 0.95))
 
     model <- list(
       corr_matrix = corr,
@@ -172,9 +172,9 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
       model = method,
       formula = NULL,
       summary = summary(dbc_model),
-      estimate = exp(unname(coef(dbc_model)[1])),
-      lower_ci = exp(unname(ci[1])),
-      upper_ci = exp(unname(ci[2]))
+      estimate = unname(round(exp(coef(dbc_model)["(Intercept)"]), 2)),
+      lower_ci = unname(round(exp(ci_intercept[1]), 2)),
+      upper_ci = unname(round(exp(ci_intercept[2]), 2))
     )
   }
 
