@@ -4,26 +4,26 @@
 #' Barocas, Joshua A et al. “Estimated Prevalence of Opioid Use Disorder in Massachusetts, 2011-2015: A Capture-Recapture Analysis.” doi:10.2105/AJPH.2018.304673
 #' \code{crc} now builds on other functions inside this package: \code{corr_formula} builds a correlation matrix between \code{binary.variables} using \code{freq.column}
 #' then constructs a recommended formula for poisson regression models. If the correlation is greater than \code{corr.threshold} it assumes an interaction term instead of additive.
-#' There is an option to use the Good-Turing method for unknown estimation, which does not require parameterization from the correlation matrix or formula
+#' There are options to use the Good-Turing method for unknown estimation, which does not require parameterization from the correlation matrix or formula, and \code{DBCount}, which
+#' rowwise sums the \code{binary.variables}, sums \code{freq.column} by grouping the rowwise sum, and uses poisson regression to estimate \code{freq.column ~ DBCount}
 #'
 #'
 #' @import data.table
 #' @importFrom ggplot2 theme
 #' @importFrom ggcorrplot ggcorrplot
+#' @importFrom MASS glm.nb
 #'
 #' @param data Dataframe: A dataframe containing a frequency column and binary columns indicating involvement in the given database
 #' @param freq.column Column: A column containing the frequency of observed combinations
 #' @param binary.variables List of Columns: List containing columns of binary variables indicating involvement in the given database
-#' @param method String: Selection for the spatial capture-recapture method - either poisson, good-turing, or negbin
+#' @param method String: Selection for the spatial capture-recapture method - either poisson, negbin, good-turing, or DBCount
 #' @param formula.selection String: Selection for formula decision when \code{method} is poisson or negbin - either aic or corr
 #' @param corr.threshold Numeric: Threshold for forcing interaction term between binary columns. Only applicable when \code{formula.selection} is \code{"corr"}
 #' @param formula Formula: Allows definition of custom formula object for poisson regression. In the case of a specified formula, both \code{formula.selection} methods will produce the same results
 #'
-#' @importFrom MASS glm.nb
-#'
 #' @export
 
-crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "aic", corr.threshold = 0.2, formula = NULL){
+crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "aic", corr.threshold = 0.2, formula = NULL, sum.databases = FALSE){
   dt <- data.table::as.data.table(data)
 
   data_expansion <- data.table()
@@ -156,6 +156,25 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
       estimate = round(gt$estimated_unseen, 2),
       lower_ci = round(gt$confidence_interval$conf.low, 2),
       upper_ci = round(gt$confidence_interval$conf.high, 2)
+    )
+  }
+
+  if(method == "DBCount"){
+    dbc <- setDT(data)[, .(dbcnt = rowSums(.SD)), by = binary.variables, .SDcols = binary.variables
+                       ][, .(N = sum(get(freq.column))), by = dbcnt]
+
+    dbc_model <- glm(N ~ dbcnt, data = dbc, family = "poisson")
+    ci <- suppressMessages(confint(dbc_model, "(Intercept)", level = 0.95))
+
+    model <- list(
+      corr_matrix = corr,
+      corr_plot = corr_plot,
+      model = method,
+      formula = NULL,
+      summary = summary(dbc_model),
+      estimate = exp(unname(coef(dbc_model)[1])),
+      lower_ci = exp(unname(ci[1])),
+      upper_ci = exp(unname(ci[2]))
     )
   }
 
