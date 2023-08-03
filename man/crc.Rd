@@ -11,7 +11,8 @@ crc(
   method = "poisson",
   formula.selection = "aic",
   corr.threshold = 0.2,
-  formula = NULL
+  formula = NULL,
+  sum.databases = FALSE
 )
 }
 \arguments{
@@ -21,7 +22,7 @@ crc(
 
 \item{binary.variables}{List of Columns: List containing columns of binary variables indicating involvement in the given database}
 
-\item{method}{String: Selection for the spatial capture-recapture method - either poisson, good-turing, or negbin}
+\item{method}{String: Selection for the spatial capture-recapture method - either poisson, negbin, good-turing, or DBCount}
 
 \item{formula.selection}{String: Selection for formula decision when \code{method} is poisson or negbin - either aic or corr}
 
@@ -34,5 +35,6 @@ A method for estimation of 'unknowns' through knowledge about knowns as describe
 Barocas, Joshua A et al. “Estimated Prevalence of Opioid Use Disorder in Massachusetts, 2011-2015: A Capture-Recapture Analysis.” doi:10.2105/AJPH.2018.304673
 \code{crc} now builds on other functions inside this package: \code{corr_formula} builds a correlation matrix between \code{binary.variables} using \code{freq.column}
 then constructs a recommended formula for poisson regression models. If the correlation is greater than \code{corr.threshold} it assumes an interaction term instead of additive.
-There is an option to use the Good-Turing method for unknown estimation, which does not require parameterization from the correlation matrix or formula
+There are options to use the Good-Turing method for unknown estimation, which does not require parameterization from the correlation matrix or formula, and \code{DBCount}, which
+rowwise sums the \code{binary.variables}, sums \code{freq.column} by grouping the rowwise sum, and uses poisson regression to estimate \code{freq.column ~ DBCount}
 }
