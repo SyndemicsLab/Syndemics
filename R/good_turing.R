@@ -35,7 +35,7 @@ good_turing <- function(data, freq.column, binary.variables) {
   ci <- BinomCI(est_unseen, num_observations, conf.level = 0.95, method = "wilson")
 
   result <- list(
-    estimated_frequencies = estimated_frequencies,
+    estimated_frequencies = estimated_unseen,
     estimated_unseen = est_unseen,
     confidence_interval = ci
   )
