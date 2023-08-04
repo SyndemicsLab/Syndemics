@@ -2,32 +2,43 @@
 #' Function that returns a list of every possible combination of interaction terms
 #'
 #' @param y Column: Column on the estimation side of the equation.
-#' @param variables List of Columns: Columns to return every combination of
+#' @param x List: Columns to return every combination of
 #'
 #' @export
 
-formula_list <- function(y, variables) {
-  n <- length(variables)
+formula_list <- function(y, x) {
+  n <- length(x)
+  all_formulas <- list()
 
-  base_formula <- paste(y, "~", paste(variables, collapse = " + "))
-  formulae <- list(as.formula(base_formula))
-
-  for(i in 2:n) {
-    combinations <- combn(variables, i, simplify = FALSE)
-    for(combination in combinations) {
-      interaction_terms <- paste(combination, collapse = "*")
-
-      remaining_vars <- setdiff(variables, combination)
-      remaining_string <- if(length(remaining_vars) > 0) paste(paste(remaining_vars, collapse = " + "), "+") else ""
-      modified_base_formula <- paste(y, "~", remaining_string, interaction_terms)
-
-      interaction_formula <- paste(base_formula, "+", interaction_terms)
-
-      formulae <- c(formulae, as.formula(interaction_formula), as.formula(modified_base_formula))
+  # Additive terms
+  for (i in 1:n) {
+    combinations <- combn(x, i)
+    for (j in 1:ncol(combinations)) {
+      combination <- combinations[,j]
+      all_formulas <- c(all_formulas, paste(y, "~", paste0(combination, collapse = "+")))
     }
   }
 
-  return(formulae)
-}
+  # Interaction terms
+  for (i in 2:n) {
+    combinations_interaction <- combn(x, i)
+    for (j in 1:ncol(combinations_interaction)) {
+      combination_interaction <- combinations_interaction[,j]
+      interaction_formula <- paste(combination_interaction, collapse = "*")
 
-formula_list(y = "N_ID", variables = c("A", "B", "C", "D", "E", "F"))
+      # Additive terms with each interaction term
+      for (k in 1:(n-1)) {
+        combinations_additive <- combn(x, k)
+        for (l in 1:ncol(combinations_additive)) {
+          combination_additive <- combinations_additive[,l]
+          all_formulas <- c(all_formulas, paste0(y, "~", paste(combination_additive, collapse = "+"), "+", interaction_formula))
+        }
+      }
+
+      # Only interaction term
+      all_formulas <- c(all_formulas, paste0(y, "~", interaction_formula))
+    }
+  }
+
+  return(lapply(unique(all_formulas), as.formula))
+}
