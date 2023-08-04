@@ -31,7 +31,7 @@ good_turing <- function(data, freq.column, binary.variables) {
 
   num_observations <- sum(frequency)
 
-  est_unseen <- round((1 - sum(observed_frequencies) / num_observations) * num_observations)
+  estimated_unseen <- round((1 - sum(observed_frequencies) / num_observations) * num_observations)
   ci <- BinomCI(est_unseen, num_observations, conf.level = 0.95, method = "wilson")
 
   result <- list(
