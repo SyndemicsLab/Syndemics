@@ -2,32 +2,42 @@
 #' Function that returns a list of every possible combination of interaction terms
 #'
 #' @param y Column: Column on the estimation side of the equation.
-#' @param variables List of Columns: Columns to return every combination of
+#' @param x List: Columns to return every combination of
 #'
 #' @export
 
-formula_list <- function(y, variables) {
-  n <- length(variables)
+formula_list <- function(y, x) {
+  n <- length(x)
+  all_formulas <- list()
 
-  base_formula <- paste(y, "~", paste(variables, collapse = " + "))
-  formulae <- list(as.formula(base_formula))
+  # Individual terms
+  for (i in 1:n) {
+    all_formulas <- c(all_formulas, paste0(y, "~", x[i]))
+  }
 
-  for(i in 2:n) {
-    combinations <- combn(variables, i, simplify = FALSE)
-    for(combination in combinations) {
-      interaction_terms <- paste(combination, collapse = "*")
+  # Additive and interaction terms
+  for (i in 2:n) {
+    combinations <- combn(x, i)
+    for (j in 1:ncol(combinations)) {
+      combination <- combinations[,j]
 
-      remaining_vars <- setdiff(variables, combination)
-      remaining_string <- if(length(remaining_vars) > 0) paste(paste(remaining_vars, collapse = " + "), "+") else ""
-      modified_base_formula <- paste(y, "~", remaining_string, interaction_terms)
+      # Additive terms
+      all_formulas <- c(all_formulas, paste0(y, "~", paste(combination, collapse="+")))
 
-      interaction_formula <- paste(base_formula, "+", interaction_terms)
+      # Interaction term
+      interaction_formula <- paste(combination, collapse="*")
+      all_formulas <- c(all_formulas, paste0(y, "~", interaction_formula))
 
-      formulae <- c(formulae, as.formula(interaction_formula), as.formula(modified_base_formula))
+      # Additive terms with interaction term
+      for (k in 1:(i-1)) {
+        combinations_additive <- combn(combination, k)
+        for (l in 1:ncol(combinations_additive)) {
+          combination_additive <- combinations_additive[,l]
+          all_formulas <- c(all_formulas, paste0(y, "~", paste(combination_additive, collapse="+"), "+", interaction_formula))
+        }
+      }
     }
   }
 
-  return(formulae)
+  return(lapply(unique(all_formulas), as.formula))
 }
-
-formula_list(y = "N_ID", variables = c("A", "B", "C", "D", "E", "F"))

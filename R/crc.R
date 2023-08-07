@@ -16,7 +16,7 @@
 #' @param data Dataframe: A dataframe containing a frequency column and binary columns indicating involvement in the given database
 #' @param freq.column Column: A column containing the frequency of observed combinations
 #' @param binary.variables List of Columns: List containing columns of binary variables indicating involvement in the given database
-#' @param method String: Selection for the spatial capture-recapture method - either poisson, negbin, good-turing, or DBCount
+#' @param method String: Selection for the spatial capture-recapture method - either poisson, negbin, or DBCount
 #' @param formula.selection String: Selection for formula decision when \code{method} is poisson or negbin - either aic or corr
 #' @param corr.threshold Numeric: Threshold for forcing interaction term between binary columns. Only applicable when \code{formula.selection} is \code{"corr"}
 #' @param formula Formula: Allows definition of custom formula object for poisson regression. In the case of a specified formula, both \code{formula.selection} methods will produce the same results
@@ -142,21 +142,6 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         upper_ci = unname(round(exp(ci_intercept[2]), 2))
       )
     }
-  }
-
-  if(method == "good-turing"){
-    gt <- good_turing(data = dt, freq.column, binary.variables)
-
-    model <- list(
-      corr_matrix = corr,
-      corr_plot = corr_plot,
-      model = method,
-      formula = NULL,
-      summary = NULL,
-      estimate = round(gt$estimated_unseen, 2),
-      lower_ci = round(gt$confidence_interval$conf.low, 2),
-      upper_ci = round(gt$confidence_interval$conf.high, 2)
-    )
   }
 
   if(method == "DBCount"){
