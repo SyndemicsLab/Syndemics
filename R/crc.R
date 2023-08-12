@@ -24,9 +24,9 @@
 #' @export
 
 crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "aic", corr.threshold = 0.2, formula = NULL,
-                opts.stepwise = list(direction = c("forward", "backward"),
-                                     threshold = c(.05, .1),
-                                     max.interactions = 2)){
+                opts.stepwise = list(direction = "both",
+                                     threshold = 0.05,
+                                     verbose = TRUE)){
   dt <- data.table::as.data.table(data)
 
   data_expansion <- data.table()
@@ -96,10 +96,10 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
       )
     } else if(formula.selection == "stepwise"){
       model <- step_regression(data, freq.column, binary.variables,
-                               threshold = opts.stepwise$threshold,
+                               p.threshold = opts.stepwise$threshold,
                                direction = opts.stepwise$direction,
-                               max.interactions = opts.stepwise$max.interactions,
-                               method = method)
+                               method = method,
+                               verbose = opts.stepwise$verbose)
     }
   }
 
@@ -152,10 +152,10 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
       )
     } else if(formula.selection == "stepwise"){
       model <- step_regression(data, freq.column, binary.variables,
-                               threshold = opts.stepwise$threshold,
+                               p.threshold = opts.stepwise$threshold,
                                direction = opts.stepwise$direction,
-                               max.interactions = opts.stepwise$max.interactions,
-                               method = method)
+                               method = method,
+                               verbose = opts.stepwise$verbose)
     }
   }
 
