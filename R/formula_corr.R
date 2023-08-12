@@ -20,7 +20,6 @@ formula_corr <- function(corr_matrix, threshold, freq.column){
   formula_string <- paste(paste(non_interaction_vars, collapse = " + "), "+", paste(interaction_terms, collapse = " + "))
   formula_string <- paste(freq.column, "~", formula_string)
 
-
   formula_object <- as.formula(formula_string)
 
   return(formula_object)
