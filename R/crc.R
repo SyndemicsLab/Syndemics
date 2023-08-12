@@ -17,13 +17,16 @@
 #' @param freq.column Column: A column containing the frequency of observed combinations
 #' @param binary.variables List of Columns: List containing columns of binary variables indicating involvement in the given database
 #' @param method String: Selection for the spatial capture-recapture method - either poisson, negbin, or DBCount
-#' @param formula.selection String: Selection for formula decision when \code{method} is poisson or negbin - either aic or corr
+#' @param formula.selection String: Selection for formula decision when \code{method} is poisson or negbin - either aic, corr, or stepwise
 #' @param corr.threshold Numeric: Threshold for forcing interaction term between binary columns. Only applicable when \code{formula.selection} is \code{"corr"}
 #' @param formula Formula: Allows definition of custom formula object for poisson regression. In the case of a specified formula, both \code{formula.selection} methods will produce the same results
-#'
+#' @param opts.stepwise List: List of \code{direction}: ('forward', 'backward'), \code{threshold}: p-value threshold for stepwise selection, and \code{max.interactions}
 #' @export
 
-crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "aic", corr.threshold = 0.2, formula = NULL, sum.databases = FALSE){
+crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "aic", corr.threshold = 0.2, formula = NULL,
+                opts.stepwise = list(direction = c("forward", "backward"),
+                                     threshold = c(.05, .1),
+                                     max.interactions = 2)){
   dt <- data.table::as.data.table(data)
 
   data_expansion <- data.table()
@@ -36,7 +39,7 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
 
   if(is.null(formula)){
     if(formula.selection == "corr"){
-      form <- corr_formula(corr, corr.threshold, freq.column)
+      form <- formula_corr(corr, corr.threshold, freq.column)
     } else if(formula.selection == "aic"){
       form <- formula_list(freq.column, binary.variables)
     }
@@ -91,6 +94,12 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         lower_ci = unname(round(exp(ci_intercept[1]), 2)),
         upper_ci = unname(round(exp(ci_intercept[2]), 2))
       )
+    } else if(formula.selection == "stepwise"){
+      model <- step_regression(data, freq.column, binary.variables,
+                               threshold = opts.stepwise$threshold,
+                               direction = opts.stepwise$direction,
+                               max.interactions = opts.stepwise$max.interactions,
+                               method = method)
     }
   }
 
@@ -141,6 +150,12 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         lower_ci = unname(round(exp(ci_intercept[1]), 2)),
         upper_ci = unname(round(exp(ci_intercept[2]), 2))
       )
+    } else if(formula.selection == "stepwise"){
+      model <- step_regression(data, freq.column, binary.variables,
+                               threshold = opts.stepwise$threshold,
+                               direction = opts.stepwise$direction,
+                               max.interactions = opts.stepwise$max.interactions,
+                               method = method)
     }
   }
 
