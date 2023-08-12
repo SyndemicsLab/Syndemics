@@ -4,7 +4,7 @@
 #' Barocas, Joshua A et al. “Estimated Prevalence of Opioid Use Disorder in Massachusetts, 2011-2015: A Capture-Recapture Analysis.” doi:10.2105/AJPH.2018.304673
 #' \code{crc} now builds on other functions inside this package: \code{corr_formula} builds a correlation matrix between \code{binary.variables} using \code{freq.column}
 #' then constructs a recommended formula for poisson regression models. If the correlation is greater than \code{corr.threshold} it assumes an interaction term instead of additive.
-#' There are options to use the Good-Turing method for unknown estimation, which does not require parameterization from the correlation matrix or formula, and \code{DBCount}, which
+#' There are options to use stepwise selection which step-wise selects models based on \code{opts.stepwise}'s \code{threshold} and \code{DBCount}, which
 #' rowwise sums the \code{binary.variables}, sums \code{freq.column} by grouping the rowwise sum, and uses poisson regression to estimate \code{freq.column ~ DBCount}
 #'
 #'
@@ -20,10 +20,10 @@
 #' @param formula.selection String: Selection for formula decision when \code{method} is poisson or negbin - either aic, corr, or stepwise
 #' @param corr.threshold Numeric: Threshold for forcing interaction term between binary columns. Only applicable when \code{formula.selection} is \code{"corr"}
 #' @param formula Formula: Allows definition of custom formula object for poisson regression. In the case of a specified formula, both \code{formula.selection} methods will produce the same results
-#' @param opts.stepwise List: List of \code{direction}: ('forward', 'backward'), \code{threshold}: p-value threshold for stepwise selection, and \code{max.interactions}
+#' @param opts.stepwise List: List of \code{direction}: 'forward', 'backward', or 'both', \code{threshold}: p-value threshold for stepwise selection, and \code{verbose} if you would like every stepped-through model to be printed
 #' @export
 
-crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "aic", corr.threshold = 0.2, formula = NULL,
+crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "stepwise", corr.threshold = 0.2, formula = NULL,
                 opts.stepwise = list(direction = "both",
                                      threshold = 0.05,
                                      verbose = TRUE)){

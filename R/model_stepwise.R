@@ -1,3 +1,6 @@
+#' @keywords internal
+#' @importFrom MASS glm.nb
+
 step_regression <- function(data, y, x, method = "poisson", direction = "both", p.threshold = 0.05, k = 2, verbose = TRUE) {
   formula_init <- as.formula(paste(y, "~", paste(x, collapse = " + ")))
   formula_max <- as.formula(paste(y, "~ (", paste(x, collapse = " + "), ")^", k))
