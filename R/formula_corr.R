@@ -1,5 +1,5 @@
 
-corr_formula <- function(corr_matrix, threshold, freq.column){
+formula_corr <- function(corr_matrix, threshold, freq.column){
   corr_upper <- corr_matrix; corr_upper[upper.tri(corr_matrix, diag = TRUE)] <- NA
   interaction_indices <- which(abs(corr_upper) > threshold, arr.ind = TRUE)
 
@@ -17,12 +17,7 @@ corr_formula <- function(corr_matrix, threshold, freq.column){
   })
 
   non_interaction_vars <- setdiff(rownames(corr_matrix), c(interactions_df$var1, interactions_df$var2))
-  if(length(interaction_terms) > 0) {
-    formula_string <- paste(paste(non_interaction_vars, collapse = " + "), "+", paste(interaction_terms, collapse = " + "))
-  } else {
-    formula_string <- paste(non_interaction_vars, collapse = " + ")
-  }
-
+  formula_string <- paste(paste(non_interaction_vars, collapse = " + "), "+", paste(interaction_terms, collapse = " + "))
   formula_string <- paste(freq.column, "~", formula_string)
 
   formula_object <- as.formula(formula_string)

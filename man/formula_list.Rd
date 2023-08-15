@@ -5,12 +5,12 @@
 \title{Generates All Possible Combination of Interaction Terms
 Function that returns a list of every possible combination of interaction terms}
 \usage{
-formula_list(y, variables)
+formula_list(y, x)
 }
 \arguments{
 \item{y}{Column: Column on the estimation side of the equation.}
 
-\item{variables}{List of Columns: Columns to return every combination of}
+\item{x}{List: Columns to return every combination of}
 }
 \description{
 Generates All Possible Combination of Interaction Terms
