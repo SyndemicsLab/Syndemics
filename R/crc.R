@@ -92,7 +92,8 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         summary = summary(tmp),
         estimate = unname(round(exp(coef(tmp)["(Intercept)"]), 2)),
         lower_ci = unname(round(exp(ci_intercept[1]), 2)),
-        upper_ci = unname(round(exp(ci_intercept[2]), 2))
+        upper_ci = unname(round(exp(ci_intercept[2]), 2)),
+        AIC = AIC(tmp)
       )
     } else if(formula.selection == "stepwise"){
       model <- step_regression(data, freq.column, binary.variables,
@@ -148,7 +149,8 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
         summary = summary(tmp),
         estimate = unname(round(exp(coef(tmp)["(Intercept)"]), 2)),
         lower_ci = unname(round(exp(ci_intercept[1]), 2)),
-        upper_ci = unname(round(exp(ci_intercept[2]), 2))
+        upper_ci = unname(round(exp(ci_intercept[2]), 2)),
+        AIC = AIC(tmp)
       )
     } else if(formula.selection == "stepwise"){
       model <- step_regression(data, freq.column, binary.variables,
@@ -174,7 +176,8 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
       summary = summary(dbc_model),
       estimate = unname(round(exp(coef(dbc_model)["(Intercept)"]), 2)),
       lower_ci = unname(round(exp(ci_intercept[1]), 2)),
-      upper_ci = unname(round(exp(ci_intercept[2]), 2))
+      upper_ci = unname(round(exp(ci_intercept[2]), 2)),
+      AIC = AIC(dbc_model)
     )
   }
 
