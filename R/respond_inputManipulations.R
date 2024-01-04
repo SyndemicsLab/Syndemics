@@ -69,3 +69,22 @@ change_agegrp_chunk <- function(data, size.out, transformation, cols, grouping){
     return(unique(out))
   }
 }
+
+#' A function to create new blocks for RESPOND (clones 'No_Treatment' blocks and reassigns the name)
+#' @param data DataFrame: data to manipulate
+#' @param names Str list: name for the new blocks
+#'
+#' @import data.table
+#' @export
+new_block <- function(data, names){
+  if(!"block" %in% names(data)) stop("'block' is not in original data")
+  data <- as.data.table(data)
+  data_list <- list()
+
+  for(n in seq_along(names)){
+    DT <- copy(data)[block == "No_Treatment", ]
+    data_list[[n]] <- DT[, block := rep.int(names[n], .N)]
+  }
+  out <- data.table::rbindlist(append(data_list, list(data)))
+  return(out)
+}
