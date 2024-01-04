@@ -4,12 +4,14 @@
 \alias{new_block}
 \title{A function to create new blocks for RESPOND (clones 'No_Treatment' blocks and reassigns the name)}
 \usage{
-new_block(data, names)
+new_block(data, names, column = "block")
 }
 \arguments{
 \item{data}{DataFrame: data to manipulate}
 
 \item{names}{Str list: name for the new blocks}
+
+\item{column}{str: column name for treatment blocks}
 }
 \description{
 A function to create new blocks for RESPOND (clones 'No_Treatment' blocks and reassigns the name)

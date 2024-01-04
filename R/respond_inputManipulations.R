@@ -73,18 +73,42 @@ change_agegrp_chunk <- function(data, size.out, transformation, cols, grouping){
 #' A function to create new blocks for RESPOND (clones 'No_Treatment' blocks and reassigns the name)
 #' @param data DataFrame: data to manipulate
 #' @param names Str list: name for the new blocks
+#' @param column str: column name for treatment blocks
 #'
 #' @import data.table
 #' @export
-new_block <- function(data, names){
-  if(!"block" %in% names(data)) stop("'block' is not in original data")
+new_block <- function(data, names, column="block"){
+  if(!column %in% names(data)) stop(paste(column, "is not in original data"))
   data <- as.data.table(data)
   data_list <- list()
 
   for(n in seq_along(names)){
-    DT <- copy(data)[block == "No_Treatment", ]
-    data_list[[n]] <- DT[, block := rep.int(names[n], .N)]
+    DT <- copy(data)[get(column) == "No_Treatment", ]
+    data_list[[n]] <- DT[, (column) := rep.int(names[n], .N)]
   }
   out <- data.table::rbindlist(append(data_list, list(data)))
   return(out)
+}
+
+#' A function to change values to another block; follows the format \code{data$x[column == "a", ] <- data$y[column == "b", ]}
+#' @param data DataFrame
+#' @param column str: column name
+#' @param x str
+#' @param y str
+#' @param a str
+#' @param b str
+#' @import data.table
+#' @export 
+
+replace_vals <- function(data, column="block", x, y, a, b) {
+  if (length(a) != length(b)) {
+    stop("Vectors 'a' and 'b' must be of the same length")
+  }
+  setDT(data)
+  for (i in seq_along(a)) {
+    data[, (x) := as.numeric(get(x))
+    ][get(column) == a[i], (x) := data[get(column) == b[i], y, with = FALSE][[1]]]
+  }
+  
+  return(data)
 }
