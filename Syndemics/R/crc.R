@@ -8,10 +8,6 @@
 #' rowwise sums the \code{binary.variables}, sums \code{freq.column} by grouping the rowwise sum, and uses poisson regression to estimate \code{freq.column ~ DBCount}
 #'
 #'
-#' @import data.table
-#' @importFrom ggplot2 theme
-#' @importFrom ggcorrplot ggcorrplot
-#' @importFrom MASS glm.nb
 #'
 #' @param data Dataframe: A dataframe containing a frequency column and binary columns indicating involvement in the given database
 #' @param freq.column Column: A column containing the frequency of observed combinations
@@ -21,6 +17,11 @@
 #' @param corr.threshold Numeric: Threshold for forcing interaction term between binary columns. Only applicable when \code{formula.selection} is \code{"corr"}
 #' @param formula Formula: Allows definition of custom formula object for poisson regression. In the case of a specified formula, both \code{formula.selection} methods will produce the same results
 #' @param opts.stepwise List: List of \code{direction}: 'forward', 'backward', or 'both', \code{threshold}: p-value threshold for stepwise selection, and \code{verbose} if you would like every stepped-through model to be printed
+#'
+#' @import data.table
+#' @importFrom ggplot2 theme
+#' @importFrom ggcorrplot ggcorrplot
+#' @importFrom MASS glm.nb
 #' @export
 
 crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "stepwise", corr.threshold = 0.2, formula = NULL,

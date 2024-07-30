@@ -1,12 +1,8 @@
-#' %in% negation
-#' @export
-`%ni%` <- Negate(`%in%`)
-
 #' A Function to Change RESPOND inputs from base-case by some percent change
 #' @param data dataframe: dataframe from RESPOND base input
 #' @param filter string: treatment block to target the change
 #' @param cycle list: cycles to edit
-#' @param pct_change num: percent to change transition state, +3% -3% would be 1.03, .97 respectively
+#' @param pct_change num: percent to change transition state, +3\% -3\% would be 1.03, .97 respectively
 #'
 #' @import data.table
 #' @export
@@ -98,7 +94,7 @@ new_block <- function(data, names, column="block"){
 #' @param a str
 #' @param b str
 #' @import data.table
-#' @export 
+#' @export
 
 replace_vals <- function(data, column="block", x, y, a, b) {
   if (length(a) != length(b)) {
@@ -109,6 +105,6 @@ replace_vals <- function(data, column="block", x, y, a, b) {
     data[, (x) := as.numeric(get(x))
     ][get(column) == a[i], (x) := data[get(column) == b[i], y, with = FALSE][[1]]]
   }
-  
+
   return(data)
 }
