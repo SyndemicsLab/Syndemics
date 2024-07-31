@@ -1,7 +1,7 @@
 #' MA DPH PHDW Script Pull
 #' Fetches most recent .SAS files for MA DPH work and saves them to a SAS/ subdirectory
 #'
-#' @import httr
+#' @importFrom httr GET stop_for_status content config
 #'
 #' @export
 fetch_sas <- function(){
