@@ -6,5 +6,3 @@
   [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
   <!-- badges: end -->
 Collection of functions developed by the Boston Medical Center Syndemics Lab for use interacting with the RESPOND model.
-
-Collection of functions developed by the Boston Medical Center Syndemics Lab
