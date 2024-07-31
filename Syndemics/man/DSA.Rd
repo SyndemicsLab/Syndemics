@@ -13,7 +13,7 @@ DSA(data, filter, cycle, pct_change)
 
 \item{cycle}{list: cycles to edit}
 
-\item{pct_change}{num: percent to change transition state, +3% -3% would be 1.03, .97 respectively}
+\item{pct_change}{num: percent to change transition state, +3\% -3\% would be 1.03, .97 respectively}
 }
 \description{
 A Function to Change RESPOND inputs from base-case by some percent change
