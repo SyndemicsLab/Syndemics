@@ -14,6 +14,8 @@ is.formula <- function(x){
 #'
 #' @param y Column: Column on the estimation side of the equation.
 #' @param x List: Columns to return every combination of
+#' @importFrom utils combn
+#' @importFrom stats as.formula
 #'
 #' @export
 

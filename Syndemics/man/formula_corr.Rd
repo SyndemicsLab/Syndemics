@@ -5,6 +5,8 @@
 \title{Internal function to create a formula based on correlation among databases listed in \code{CRC}}
 \usage{
 formula_corr(corr_matrix, threshold, freq.column)
+
+formula_corr(corr_matrix, threshold, freq.column)
 }
 \arguments{
 \item{corr_matrix}{A correlation matrix}
@@ -14,6 +16,8 @@ formula_corr(corr_matrix, threshold, freq.column)
 \item{freq.column}{frequency column, e.g. N_ID}
 }
 \description{
+Internal function to create a formula based on correlation among databases listed in \code{CRC}
+
 Internal function to create a formula based on correlation among databases listed in \code{CRC}
 }
 \keyword{internal}

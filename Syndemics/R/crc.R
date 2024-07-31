@@ -29,6 +29,10 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
                                      threshold = 0.05,
                                      verbose = TRUE)){
   dt <- data.table::as.data.table(data)
+  cor <- NULL
+  glm <- coef <- AIC  <- dbcnt <- NULL
+  confint <- NULL
+  step_regression <- NULL
 
   data_expansion <- data.table()
   data_expansion <- dt[rep(1:.N, get(freq.column))][, (freq.column) := NULL]
@@ -163,8 +167,8 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
   }
 
   if(method == "DBCount"){
-    dbc <- setDT(dt)[, .(dbcnt = rowSums(.SD)), by = c(binary.variables, freq.column), .SDcols = binary.variables
-                     ][, .(N = sum(get(freq.column))), by = dbcnt]
+    dbc <- setDT(dt)[, list(dbcnt = rowSums(.SD)), by = c(binary.variables, freq.column), .SDcols = binary.variables
+                     ][, list(N = sum(get(freq.column))), by = dbcnt]
 
     dbc_model <- glm(N ~ dbcnt, data = dbc, family = "poisson")
     ci_intercept <- suppressMessages(confint(dbc_model, "(Intercept)", level = 0.95))

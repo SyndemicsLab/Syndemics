@@ -8,9 +8,10 @@
 #' @export
 DSA <- function(data, filter, cycle, pct_change){
   data <- as.data.table(data)
+  initial_block <- NULL
   for(c in cycle){
     DT <- data[initial_block == filter, paste0("to_", filter, "_cycle", c) := get(paste0("to_", filter, "_cycle", c))*pct_change
-    ][, paste0("to_corresponding_post_trt_cycle", c) := 1 - get(paste0("to_", filter, "_cycle", c))]
+               ][, paste0("to_corresponding_post_trt_cycle", c) := 1 - get(paste0("to_", filter, "_cycle", c))]
   }
   return(DT)
 }
@@ -26,8 +27,10 @@ DSA <- function(data, filter, cycle, pct_change){
 #' @export
 change_agegrp_chunk <- function(data, size.out, transformation, cols, grouping){
   DT <- as.data.table(data)
+  agegrp <- age <- NULL
+  age_min <- age_max <- NULL
   if(!cols %in% names(DT)) stop("Column names in 'cols' do not match names in 'data'")
-  if(missing(grouping)) grouping <- names(DT)[c(names(DT) %ni% c(cols, "agegrp"))]
+  if(missing(grouping)) grouping <- names(DT)[!c(names(DT) %in% c(cols, "agegrp"))]
 
   DT <- DT[, `:=` (age_min = as.integer(sub("_(.*)", "", agegrp)),
                    age_max = as.integer(sub("^(.*?)_", "", agegrp)),

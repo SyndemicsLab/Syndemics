@@ -20,6 +20,7 @@
 #' - $"cost_life/total_costs1.csv"
 #' ```
 #' @md
+#' @importFrom utils read.csv
 #'
 #' @export
 loadOutputFiles <- function(N, outputFileNames, pathPrefix = "") {
@@ -31,7 +32,7 @@ loadOutputFiles <- function(N, outputFileNames, pathPrefix = "") {
   outputTables <- list()
   # read files and store them in outputTables
   for (index in seq_along(outputNumbers)) {
-    outputFolder <- paste0("output", output)
+    outputFolder <- paste0("output", index)
     currentOutputTables <- list()
     for (outputFile in outputFileNames) {
       currentOutputTables[[outputFile]] <- read.csv(paste0(pathPrefix, outputFolder, "/", outputFile))
