@@ -90,6 +90,17 @@ formula_corr <- function(corr_matrix, threshold, freq.column){
   return(formula_object)
 }
 
+#' Helper function for stepwise regression
+#' @param data dataframe
+#' @param y string: LHS of formula object
+#' @param x string: RHS of formula object
+#' @param method string: either 'poisson' or 'negbin'
+#' @param direction string: stepwise direction
+#' @param p.threshold numeric: threshold for stepwise selection
+#' @param k integer: limit for k-way interaction terms
+#' @param verbose
+#'
+#'
 #' @keywords internal
 #' @importFrom MASS glm.nb
 #' @importFrom utils capture.output
