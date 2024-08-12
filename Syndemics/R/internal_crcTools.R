@@ -92,6 +92,8 @@ formula_corr <- function(corr_matrix, threshold, freq.column){
 
 #' @keywords internal
 #' @importFrom MASS glm.nb
+#' @importFrom utils capture.output
+#' @importFrom stats AIC coef confint formula glm poisson step
 
 step_regression <- function(data, y, x, method = "poisson", direction = "both", p.threshold = 0.05, k = 2, verbose = TRUE) {
   formula_init <- as.formula(paste(y, "~", paste(x, collapse = " + ")))
