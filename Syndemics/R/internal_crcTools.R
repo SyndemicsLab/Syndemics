@@ -89,3 +89,68 @@ formula_corr <- function(corr_matrix, threshold, freq.column){
 
   return(formula_object)
 }
+
+#' Helper function for stepwise regression
+#' @param data dataframe
+#' @param y string: LHS of formula object
+#' @param x string: RHS of formula object
+#' @param method string: either 'poisson' or 'negbin'
+#' @param direction string: stepwise direction
+#' @param p.threshold numeric: threshold for stepwise selection
+#' @param k integer: limit for k-way interaction terms
+#' @param verbose
+#'
+#'
+#' @keywords internal
+#' @importFrom MASS glm.nb
+#' @importFrom utils capture.output
+#' @importFrom stats AIC coef confint formula glm poisson step
+
+step_regression <- function(data, y, x, method = "poisson", direction = "both", p.threshold = 0.05, k = 2, verbose = TRUE) {
+  formula_init <- as.formula(paste(y, "~", paste(x, collapse = " + ")))
+  formula_max <- as.formula(paste(y, "~ (", paste(x, collapse = " + "), ")^", k))
+
+  if (!verbose) {
+    capture.output({
+      if (method == "poisson") {
+        init_mod <- glm(formula_init, family = poisson, data = data)
+      } else if (method == "negbin") {
+        init_mod <- glm.nb(formula_init, data = data)
+      }
+
+      final_mod <- suppressWarnings(step(init_mod,
+                                         scope = list(upper = formula_max, lower = formula_init),
+                                         direction = direction,
+                                         k = log(nrow(data))))
+    })
+  } else {
+    if (method == "poisson") {
+      init_mod <- glm(formula_init, family = poisson, data = data)
+    } else if (method == "negbin") {
+      init_mod <- glm.nb(formula_init, data = data)
+    }
+
+    final_mod <- step(init_mod,
+                      scope = list(upper = formula_max, lower = formula_init),
+                      direction = direction,
+                      k = log(nrow(data)))
+  }
+
+  intercept <- coef(final_mod)[1]
+  estimate <- exp(intercept)
+  ci <- exp(confint(final_mod)[1, ])
+
+
+  results <- list(
+    model = method,
+    formula = formula(final_mod),
+    summary = summary(final_mod),
+    estimate = unname(estimate),
+    lower_ci = unname(ci[1]),
+    upper_ci = unname(ci[2]),
+    AIC = AIC(final_mod)
+  )
+
+  return(results)
+}
+

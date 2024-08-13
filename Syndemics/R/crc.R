@@ -30,9 +30,7 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
                                      verbose = TRUE)){
   dt <- data.table::as.data.table(data)
   cor <- NULL
-  glm <- coef <- AIC  <- dbcnt <- NULL
-  confint <- NULL
-  step_regression <- NULL
+  glm <- coef <- AIC <- dbcnt <- NULL
 
   data_expansion <- data.table()
   data_expansion <- dt[rep(1:.N, get(freq.column))][, (freq.column) := NULL]
