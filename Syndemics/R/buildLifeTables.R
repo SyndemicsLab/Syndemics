@@ -9,7 +9,7 @@
 #' @import tidyverse
 #' @export
 
-capture_background_mortality <- function(file_path, bin_size = 20) {
+extract_background_mortality <- function(file_path, bin_size, age_groups) {
     data <- read_excel(file_path, skip=1)
     dt <- data.table::as.data.table(data)[(2:101)]
     setnames(dt, "Probability of dying between ages x and x + 1", "year_prob")
@@ -19,29 +19,44 @@ capture_background_mortality <- function(file_path, bin_size = 20) {
     deaths <- dt[, sum(year_deaths), by=(seq(nrow(dt))-1) %/% bin_size][,2]
     weekly_rates <- (deaths/100000)/52
     weekly_probs <- 1 - exp(-weekly_rates)
-    age_groups <- c("1_20","21_40","41_60","61_80","81_100")
     colname <- c("agegrp")
     weekly_probs[, (colname) := age_groups]
     return(weekly_probs)
 }
 
 build_union <- function(lt) {
-  union <- rbind(lt[[1]], lt[[2]], lt[[3]], lt[[4]], lt[[5]], lt[[6]])
-  names(union)[names(union) == 'V1'] <- 'weekly_probability'
+  union <- rbindlist(lt)
+  setnames(union, 'V1', 'weekly_probability', skip_absent=TRUE)
   return(union)
 }
 
-races <- c("black", "hispanic", "white")
-sexes <- c("female", "male")
-crosses <- tidyr::crossing(races, sexes)
-full_table <- as.data.table(crosses[rep(seq_len(nrow(crosses)), 5), ])
-full_table <- full_table[order(races, sexes)]
+build_base_table <- function(races, sexes, age_groups){
+  crosses <- tidyr::crossing(races, sexes)
+  full_table <- as.data.table(crosses[rep(seq_len(nrow(crosses)), length(age_groups)), ])
+  full_table <- full_table[order(races, sexes)]
+  return(full_table)
+}
+
+fill_base_table <- function(base_table, background_mortality){
+  unions <- list.cbind(lapply(split(background_mortality, ceiling(seq_along(background_mortality)/(length(races)*length(sexes)))), build_union))
+  binded <- cbind(base_table, unions)
+  return(binded[, !c("2.agegrp", "3.agegrp", "4.agegrp", "5.agegrp", "6.agegrp", "7.agegrp")])
+}
+
+build_background_mortality_file <-function(files, outputfile, races, sexes, age_groups, bin_size){
+  background_mortality <- lapply(files, extract_background_mortality, bin_size=bin_size, age_groups=age_groups)
+  base_table <- build_base_table(races, sexes, age_groups)
+  return(fill_base_table(base_table, background_mortality))
+}
 
 dirs <- c("/home/matt/Repos/TestData/RESPOND/life_tables")
+outputfile <- "background_mortality.csv"
+races <- c("black", "hispanic", "white")
+sexes <- c("female", "male")
+age_groups <- c("1_20","21_40","41_60","61_80","81_100")
+bin_size <- 20
 files <- list.files(dirs, pattern="\\.xlsx$", full.names = TRUE, recursive=TRUE)
-res <- lapply(files, capture_background_mortality)
 
-probs <- list.cbind(lapply(split(res, ceiling(seq_along(res)/6)), build_union))
-res <- cbind(full_table, probs)
-res <- res[, !c("2.agegrp", "3.agegrp", "4.agegrp", "5.agegrp", "6.agegrp", "7.agegrp")]
-write.csv(res, "background_mortality.csv")
+complete_table <- build_background_mortality_file(files, outputfile, races, sexes, age_groups, bin_size)
+
+write.csv(complete_table, outputfile)
