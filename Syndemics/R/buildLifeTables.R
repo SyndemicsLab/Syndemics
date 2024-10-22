@@ -9,7 +9,7 @@
 #' @import tidyverse
 #' @export
 
-extract_background_mortality <- function(file_path, bin_size, age_groups) {
+extract_background_mortality <- function(file_path, bin_size = 20, age_groups = c("1_20","21_40","41_60","61_80","81_100")) {
     data <- read_excel(file_path, skip=1)
     dt <- data.table::as.data.table(data)[(2:101)]
     setnames(dt, "Probability of dying between ages x and x + 1", "year_prob")
@@ -30,33 +30,47 @@ build_union <- function(lt) {
   return(union)
 }
 
-build_base_table <- function(races, sexes, age_groups){
+build_base_table <- function(races = c("black", "hispanic", "white"),
+                             sexes = c("female", "male"),
+                             age_groups = c("1_20","21_40","41_60","61_80","81_100")){
   crosses <- tidyr::crossing(races, sexes)
   full_table <- as.data.table(crosses[rep(seq_len(nrow(crosses)), length(age_groups)), ])
   full_table <- full_table[order(races, sexes)]
   return(full_table)
 }
 
-fill_base_table <- function(base_table, background_mortality){
-  unions <- list.cbind(lapply(split(background_mortality, ceiling(seq_along(background_mortality)/(length(races)*length(sexes)))), build_union))
+fill_base_table <- function(base_table,
+                            background_mortality,
+                            races = c("black", "hispanic", "white"),
+                            sexes = c("female", "male")){
+  unions <- list.cbind(lapply(
+    split(background_mortality,
+          ceiling(
+            seq_along(background_mortality)/(length(races)*length(sexes)))
+          ),
+    build_union))
   binded <- cbind(base_table, unions)
   return(binded[, !c("2.agegrp", "3.agegrp", "4.agegrp", "5.agegrp", "6.agegrp", "7.agegrp")])
 }
 
-build_background_mortality_file <-function(files, outputfile, races, sexes, age_groups, bin_size){
-  background_mortality <- lapply(files, extract_background_mortality, bin_size=bin_size, age_groups=age_groups)
-  base_table <- build_base_table(races, sexes, age_groups)
+build_background_mortality_file <-function(files,
+                                           outputfile,
+                                           races = c("black", "hispanic", "white"),
+                                           sexes = c("female", "male"),
+                                           age_groups = c("1_20","21_40","41_60","61_80","81_100"),
+                                           bin_size = 20){
+  background_mortality <- lapply(files, extract_background_mortality)
+  base_table <- build_base_table()
   return(fill_base_table(base_table, background_mortality))
 }
 
-dirs <- c("/home/matt/Repos/TestData/RESPOND/life_tables")
-outputfile <- "background_mortality.csv"
-races <- c("black", "hispanic", "white")
-sexes <- c("female", "male")
-age_groups <- c("1_20","21_40","41_60","61_80","81_100")
-bin_size <- 20
+# Should be the root folder that holds the CDC life tables
+dirs <- c("~/")
 files <- list.files(dirs, pattern="\\.xlsx$", full.names = TRUE, recursive=TRUE)
 
-complete_table <- build_background_mortality_file(files, outputfile, races, sexes, age_groups, bin_size)
+# End name of the output file
+outputfile <- "background_mortality.csv"
 
+# Run and Build the Resulting File
+complete_table <- build_background_mortality_file(files)
 write.csv(complete_table, outputfile)
