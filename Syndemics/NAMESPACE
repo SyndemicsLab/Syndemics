@@ -3,7 +3,6 @@
 export(DSA)
 export(change_agegrp_chunk)
 export(crc)
-export(extract_background_mortality)
 export(fetch_sas)
 export(formula_list)
 export(is.formula)
