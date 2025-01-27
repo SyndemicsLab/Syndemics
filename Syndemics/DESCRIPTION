@@ -14,4 +14,7 @@ Imports:
     ggcorrplot,
     ggplot2,
     httr,
-    MASS
+    MASS,
+    readxl,
+    tidyr,
+    rlist
