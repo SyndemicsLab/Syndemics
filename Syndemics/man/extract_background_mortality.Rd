@@ -10,6 +10,13 @@ extract_background_mortality(
   age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100")
 )
 }
+\arguments{
+\item{file_path}{The path to the CDC NVSS Life Table}
+
+\item{bin_size}{The size ages are grouped by}
+
+\item{age_groups}{A list of age groups}
+}
 \description{
 Input: CDC Life Tables
 Output: data.table containing the weekly probabilities

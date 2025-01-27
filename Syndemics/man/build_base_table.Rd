@@ -10,6 +10,13 @@ build_base_table(
   age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100")
 )
 }
+\arguments{
+\item{races}{A list of races}
+
+\item{sexes}{A list of sexes}
+
+\item{age_groups}{A list of age groups}
+}
 \description{
 Input: Demographics to stratify
 Output: Empty Shell table

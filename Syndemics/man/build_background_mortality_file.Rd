@@ -13,6 +13,19 @@ build_background_mortality_file(
   bin_size = 20
 )
 }
+\arguments{
+\item{files}{A set of files to extract the background mortality out of}
+
+\item{outputfile}{The name of the file to output the background mortality}
+
+\item{races}{A list of races}
+
+\item{sexes}{A list of sexes}
+
+\item{age_groups}{A list of age groups}
+
+\item{bin_size}{The size ages are grouped by}
+}
 \description{
 Input: CDC NVSS Life Tables, output file name, stratifications
 Output: Resulting background mortality compatible with RESPOND

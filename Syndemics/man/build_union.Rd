@@ -6,6 +6,9 @@
 \usage{
 build_union(lt)
 }
+\arguments{
+\item{lt}{A list of data tables containing the weekly probabilities}
+}
 \description{
 Input: List of data.tables containing the weekly probabilities and their stratifications
 Output: Joined List of data.tables

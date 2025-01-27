@@ -3,6 +3,13 @@
 #' Input: CDC NVSS Life Tables, output file name, stratifications
 #' Output: Resulting background mortality compatible with RESPOND
 #'
+#' @param files A set of files to extract the background mortality out of
+#' @param outputfile The name of the file to output the background mortality
+#' @param races A list of races
+#' @param sexes A list of sexes
+#' @param age_groups A list of age groups
+#' @param bin_size The size ages are grouped by
+#'
 #' @import data.table
 #' @export
 
@@ -21,6 +28,10 @@ build_background_mortality_file <- function(files,
 #'
 #' Input: CDC Life Tables
 #' Output: data.table containing the weekly probabilities
+#'
+#' @param file_path The path to the CDC NVSS Life Table
+#' @param bin_size The size ages are grouped by
+#' @param age_groups A list of age groups
 #'
 #' @import data.table
 #' @import readxl
@@ -48,6 +59,8 @@ extract_background_mortality <- function(file_path, bin_size = 20, age_groups = 
 #' Input: List of data.tables containing the weekly probabilities and their stratifications
 #' Output: Joined List of data.tables
 #'
+#' @param lt A list of data tables containing the weekly probabilities
+#'
 #' @import data.table
 #' @keywords internal
 
@@ -61,6 +74,10 @@ build_union <- function(lt) {
 #'
 #' Input: Demographics to stratify
 #' Output: Empty Shell table
+#'
+#' @param races A list of races
+#' @param sexes A list of sexes
+#' @param age_groups A list of age groups
 #'
 #' @import data.table
 #' @importFrom tidyr crossing
@@ -79,6 +96,11 @@ build_base_table <- function(races = c("black", "hispanic", "white"),
 #'
 #' Input: Empty shell table and extracted background mortality
 #' Output: a full data.table containing the extracted mortalities
+#'
+#' @param base_table The empty shell table
+#' @param background_mortality The extracted background mortality
+#' @param races A list of races
+#' @param sexes A list of sexes
 #'
 #' @import data.table
 #' @import rlist

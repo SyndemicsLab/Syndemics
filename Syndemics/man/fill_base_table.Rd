@@ -11,6 +11,15 @@ fill_base_table(
   sexes = c("female", "male")
 )
 }
+\arguments{
+\item{base_table}{The empty shell table}
+
+\item{background_mortality}{The extracted background mortality}
+
+\item{races}{A list of races}
+
+\item{sexes}{A list of sexes}
+}
 \description{
 Input: Empty shell table and extracted background mortality
 Output: a full data.table containing the extracted mortalities
