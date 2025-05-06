@@ -4,8 +4,8 @@
 \name{Syndemics-package}
 \alias{Syndemics}
 \alias{Syndemics-package}
-\title{Syndemics: A collection of miscellaneous functions created for internal use with the Boston Medical Center Syndemics lab}
+\title{Syndemics: Utility functions for interacting with the Syndemics Lab's RESPOND model}
 \description{
-The Syndemics Lab is a research unit with Boston Medical Center. Our primary work involves dynamic simulations for predicting and analyzing opioid use disorder, HIV, and HEP-CE. This package is a collection of commonly used workflow functionalizations serving analytic purposes.
+A collection of utility functions created to interact with the Syndemics Lab's data and models. The two primary focuses of this package are the `CRC` function, which is used to preform capture-recapture analysis Wang J, Bernson D, et. al \doi{10.1016/j.lana.2024.100709} which then provides the data for other shell-manipulation functions provided in this package through the other focus, easily manipulating and setting up shell tables for the RESPOND model. RWMA Madushani, Jianing Wang, et. al \doi{10.1371/journal.pone.0310763}
 }
 \keyword{internal}

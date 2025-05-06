@@ -30,7 +30,7 @@ step_regression(
 
 \item{k}{integer: limit for k-way interaction terms}
 
-\item{verbose}{}
+\item{verbose}{logical: whether to print intermediate models}
 }
 \description{
 Helper function for stepwise regression
