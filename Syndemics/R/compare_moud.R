@@ -1,62 +1,80 @@
-library(dplyr)
-library(ggplot2)
+#' Compare MOUD Counts Between 2 Files
+#'
+#' This function compares MOUD counts between an "old" and a "new" dataset.
+#' It returns two plots:
+#' (1) Time series comparison by treatment type, and
+#' (2) Difference in counts (new - old) by treatment type over time.
+#'
+#' @param old_path Character: File path to the old MOUD dataset (CSV format)
+#' @param new_path Character: File path to the new MOUD dataset (CSV format)
+#'
+#' @return List: A list with two ggplot objects: \code{count_plot} and \code{difference_plot}
+#'
+#' @importFrom dplyr mutate select rename bind_rows left_join
+#' @importFrom ggplot2 ggplot aes geom_line geom_col facet_wrap labs theme_minimal theme element_text
+#' @export
 
 compare_moud <- function(old_path, new_path) {
-  old_df <- read.csv(old_path, stringsAsFactors = FALSE)
-  old_df <- mutate(old_df, version = "Old")
+  # read and label the datasets
+  old_df <- read.csv(old_path, stringsAsFactors = FALSE) %>%
+    dplyr::mutate(version = "Old")
 
-  new_df <- read.csv(new_path, stringsAsFactors = FALSE)
-  new_df <- mutate(new_df, version = "New")
+  new_df <- read.csv(new_path, stringsAsFactors = FALSE) %>%
+    dplyr::mutate(version = "New")
 
-  combined <- bind_rows(old_df, new_df)  # ← this line was missing!
-  combined <- mutate(combined, date = as.Date(paste(year, month, "01", sep = "-")))
+  # combine datasets and add date
+  combined <- dplyr::bind_rows(old_df, new_df) %>%
+    dplyr::mutate(date = as.Date(paste(year, month, "01", sep = "-")))
 
-  p1 <- ggplot(combined, aes(x = date, y = N_ID, color = version, linetype = version)) +
-    geom_line(linewidth = 1) +
-    facet_wrap(~ treatment, scales = "free_y") +
-    labs(
+  # plot 1: time series of MOUD counts by treatment
+  count_plot <- ggplot2::ggplot(combined, ggplot2::aes(x = date, y = N_ID, color = version, linetype = version)) +
+    ggplot2::geom_line(linewidth = 1) +
+    ggplot2::facet_wrap(~ treatment, scales = "free_y") +
+    ggplot2::labs(
       title = "Monthly MOUD Counts by Treatment Type: Old vs New Dataset",
       x = "Date",
       y = "MOUD Count",
       color = "Version",
       linetype = "Version"
     ) +
-    scale_color_manual(values = c("Old" = "grey", "New" = "purple")) +
-    theme_minimal() +
-    theme(
+    ggplot2::scale_color_manual(values = c("Old" = "grey", "New" = "purple")) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
       legend.position = "top",
-      axis.text.x = element_text(angle = 45, hjust = 1)
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
     )
 
-  old_df2 <- read.csv(old_path, stringsAsFactors = FALSE)
-  old_df2 <- dplyr::select(old_df2, treatment, month, year, N_ID)
-  old_df2 <- rename(old_df2, old_count = N_ID)
+  # prepare difference dataset
+  old_df2 <- read.csv(old_path, stringsAsFactors = FALSE) %>%
+    dplyr::select(treatment, month, year, N_ID) %>%
+    dplyr::rename(old_count = N_ID)
 
-  new_df2 <- read.csv(new_path, stringsAsFactors = FALSE)
-  new_df2 <- dplyr::select(new_df2, treatment, month, year, N_ID)
-  new_df2 <- rename(new_df2, new_count = N_ID)
+  new_df2 <- read.csv(new_path, stringsAsFactors = FALSE) %>%
+    dplyr::select(treatment, month, year, N_ID) %>%
+    dplyr::rename(new_count = N_ID)
 
-  diff_df <- left_join(old_df2, new_df2, by = c("treatment", "month", "year"))
-  diff_df <- mutate(
-    diff_df,
-    difference = new_count - old_count,
-    date = as.Date(paste(year, month, "01", sep = "-"))
-  )
+  diff_df <- dplyr::left_join(old_df2, new_df2, by = c("treatment", "month", "year")) %>%
+    dplyr::mutate(
+      difference = new_count - old_count,
+      date = as.Date(paste(year, month, "01", sep = "-"))
+    )
 
-  p2 <- ggplot(diff_df, aes(x = date, y = difference, fill = difference > 0)) +
-    geom_col(show.legend = FALSE) +
-    facet_wrap(~ treatment, scales = "free_y") +
-    scale_fill_manual(values = c("TRUE" = "darkgreen", "FALSE" = "firebrick")) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
-    labs(
+  # plot 2: difference in MOUD counts
+  difference_plot <- ggplot2::ggplot(diff_df, ggplot2::aes(x = date, y = difference, fill = difference > 0)) +
+    ggplot2::geom_col(show.legend = FALSE) +
+    ggplot2::facet_wrap(~ treatment, scales = "free_y") +
+    ggplot2::scale_fill_manual(values = c("TRUE" = "darkgreen", "FALSE" = "firebrick")) +
+    ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+    ggplot2::labs(
       title = "Change in MOUD Counts by Treatment Type: New – Old",
       x = "Date",
       y = "Difference in MOUD Count (New – Old)"
     ) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1)
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
     )
 
-  list(count_plot = p1, difference_plot = p2)
+  return(list(count_plot = count_plot, difference_plot = difference_plot))
 }
+
