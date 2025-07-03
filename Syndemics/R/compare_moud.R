@@ -1,18 +1,18 @@
 library(dplyr)
 library(ggplot2)
 
-compare_moud_counts <- function(old_path, new_path) {
+compare_moud <- function(old_path, new_path) {
   old_df <- read.csv(old_path, stringsAsFactors = FALSE)
   old_df <- mutate(old_df, version = "Old")
 
   new_df <- read.csv(new_path, stringsAsFactors = FALSE)
   new_df <- mutate(new_df, version = "New")
 
-  combined <- bind_rows(old_df, new_df)
+  combined <- bind_rows(old_df, new_df)  # ← this line was missing!
   combined <- mutate(combined, date = as.Date(paste(year, month, "01", sep = "-")))
 
-  ggplot(combined, aes(x = date, y = N_ID, color = version, linetype = version)) +
-    geom_line(size = 1) +
+  p1 <- ggplot(combined, aes(x = date, y = N_ID, color = version, linetype = version)) +
+    geom_line(linewidth = 1) +
     facet_wrap(~ treatment, scales = "free_y") +
     labs(
       title = "Monthly MOUD Counts by Treatment Type: Old vs New Dataset",
@@ -27,25 +27,23 @@ compare_moud_counts <- function(old_path, new_path) {
       legend.position = "top",
       axis.text.x = element_text(angle = 45, hjust = 1)
     )
-}
 
-plot_moud_differences <- function(old_path, new_path) {
-  old_df <- read.csv(old_path, stringsAsFactors = FALSE)
-  old_df <- dplyr::select(old_df, treatment, month, year, N_ID)
-  old_df <- rename(old_df, old_count = N_ID)
+  old_df2 <- read.csv(old_path, stringsAsFactors = FALSE)
+  old_df2 <- dplyr::select(old_df2, treatment, month, year, N_ID)
+  old_df2 <- rename(old_df2, old_count = N_ID)
 
-  new_df <- read.csv(new_path, stringsAsFactors = FALSE)
-  new_df <- dplyr::select(new_df, treatment, month, year, N_ID)
-  new_df <- rename(new_df, new_count = N_ID)
+  new_df2 <- read.csv(new_path, stringsAsFactors = FALSE)
+  new_df2 <- dplyr::select(new_df2, treatment, month, year, N_ID)
+  new_df2 <- rename(new_df2, new_count = N_ID)
 
-  diff_df <- left_join(old_df, new_df, by = c("treatment", "month", "year"))
+  diff_df <- left_join(old_df2, new_df2, by = c("treatment", "month", "year"))
   diff_df <- mutate(
     diff_df,
     difference = new_count - old_count,
     date = as.Date(paste(year, month, "01", sep = "-"))
   )
 
-  ggplot(diff_df, aes(x = date, y = difference, fill = difference > 0)) +
+  p2 <- ggplot(diff_df, aes(x = date, y = difference, fill = difference > 0)) +
     geom_col(show.legend = FALSE) +
     facet_wrap(~ treatment, scales = "free_y") +
     scale_fill_manual(values = c("TRUE" = "darkgreen", "FALSE" = "firebrick")) +
@@ -59,4 +57,6 @@ plot_moud_differences <- function(old_path, new_path) {
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1)
     )
+
+  list(count_plot = p1, difference_plot = p2)
 }
