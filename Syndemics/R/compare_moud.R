@@ -1,3 +1,5 @@
+library(dplyr)
+
 #' Compare MOUD Counts Between 2 Files
 #'
 #' This function compares MOUD counts between an "old" and a "new" dataset.
@@ -78,3 +80,4 @@ compare_moud <- function(old_path, new_path) {
   return(list(count_plot = count_plot, difference_plot = difference_plot))
 }
 
+# compare_moud("~/Syndemics/Syndemics/Syndemics/MOUD Data/MOUDCount_03JUN2025.csv", "~/Syndemics/Syndemics/Syndemics/MOUD Data/MOUDCount_23JUN2025.csv")
