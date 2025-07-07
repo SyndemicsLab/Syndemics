@@ -77,7 +77,7 @@ compare_moud <- function(old_path, new_path) {
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
     )
 
-  return(list(count_plot = count_plot, difference_plot = difference_plot))
+  return(list(count_plot = count_plot, difference_plot = difference_plot, difference_data = diff_df))
 }
 
 # compare_moud("~/Syndemics/Syndemics/Syndemics/MOUD Data/MOUDCount_03JUN2025.csv", "~/Syndemics/Syndemics/Syndemics/MOUD Data/MOUDCount_23JUN2025.csv")
