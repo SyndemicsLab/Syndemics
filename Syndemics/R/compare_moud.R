@@ -1,11 +1,9 @@
-library(dplyr)
-
 #' Compare MOUD Counts Between 2 Files
 #'
 #' This function compares MOUD counts between an "old" and a "new" dataset.
 #' It returns two plots:
 #' (1) Time series comparison by treatment type, and
-#' (2) Difference in counts (new - old) by treatment type over time.
+#' (2) Difference in counts (new vs old) by treatment type over time.
 #'
 #' @param old_path Character: File path to the old MOUD dataset (CSV format)
 #' @param new_path Character: File path to the new MOUD dataset (CSV format)
@@ -17,6 +15,7 @@ library(dplyr)
 #' @export
 
 compare_moud <- function(old_path, new_path) {
+  N_ID <- treatment <- new_count <- old_count <- difference <- NULL
   # read and label the datasets
   old_df <- read.csv(old_path, stringsAsFactors = FALSE) %>%
     dplyr::mutate(version = "Old")
@@ -68,9 +67,9 @@ compare_moud <- function(old_path, new_path) {
     ggplot2::scale_fill_manual(values = c("TRUE" = "darkgreen", "FALSE" = "firebrick")) +
     ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
     ggplot2::labs(
-      title = "Change in MOUD Counts by Treatment Type: New – Old",
+      title = "Change in MOUD Counts by Treatment Type: New vs Old",
       x = "Date",
-      y = "Difference in MOUD Count (New – Old)"
+      y = "Difference in MOUD Count (New vs Old)"
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
@@ -79,5 +78,3 @@ compare_moud <- function(old_path, new_path) {
 
   return(list(count_plot = count_plot, difference_plot = difference_plot, difference_data = diff_df))
 }
-
-# compare_moud("~/Syndemics/Syndemics/Syndemics/MOUD Data/MOUDCount_03JUN2025.csv", "~/Syndemics/Syndemics/Syndemics/MOUD Data/MOUDCount_23JUN2025.csv")

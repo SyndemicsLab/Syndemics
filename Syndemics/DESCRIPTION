@@ -8,7 +8,7 @@ Description: The Syndemics Lab is a research unit with Boston Medical Center. Ou
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports: 
     data.table,
     ggcorrplot,
@@ -17,4 +17,6 @@ Imports:
     MASS,
     readxl,
     tidyr,
-    rlist
+    rlist,
+    magrittr,
+    dplyr
