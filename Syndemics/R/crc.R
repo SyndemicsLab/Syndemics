@@ -12,7 +12,7 @@
 #' @param data Dataframe: A dataframe containing a frequency column and binary columns indicating involvement in the given database
 #' @param freq.column Column: A column containing the frequency of observed combinations
 #' @param binary.variables List of Columns: List containing columns of binary variables indicating involvement in the given database
-#' @param method String: Selection for the spatial capture-recapture method - either poisson, negbin, or DBCount
+#' @param method String: Selection for the spatial capture-recapture method - either poisson, or negbin
 #' @param formula.selection String: Selection for formula decision when \code{method} is poisson or negbin - either aic, corr, or stepwise
 #' @param corr.threshold Numeric: Threshold for forcing interaction term between binary columns. Only applicable when \code{formula.selection} is \code{"corr"}
 #' @param formula Formula: Allows definition of custom formula object for poisson regression. In the case of a specified formula, both \code{formula.selection} methods will produce the same results
@@ -179,25 +179,5 @@ crc <- function(data, freq.column, binary.variables, method = "poisson", formula
             )
         }
     }
-
-    if (method == "DBCount") {
-        dbc <- setDT(dt)[, list(dbcnt = rowSums(.SD)), by = c(binary.variables, freq.column), .SDcols = binary.variables][, list(N = sum(get(freq.column))), by = dbcnt]
-
-        dbc_model <- glm(N ~ dbcnt, data = dbc, family = "poisson")
-        ci_intercept <- suppressMessages(confint(dbc_model, "(Intercept)", level = 0.95))
-
-        model <- list(
-            corr_matrix = corr,
-            corr_plot = corr_plot,
-            model = method,
-            formula = NULL,
-            summary = summary(dbc_model),
-            estimate = unname(round(exp(coef(dbc_model)["(Intercept)"]), 2)),
-            lower_ci = unname(round(exp(ci_intercept[1]), 2)),
-            upper_ci = unname(round(exp(ci_intercept[2]), 2)),
-            AIC = AIC(dbc_model)
-        )
-    }
-
     return(model)
 }
