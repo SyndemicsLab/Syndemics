@@ -12,7 +12,7 @@
 #' @return List: A list containing:
 #' \describe{
 #'   \item{\code{count_plot}}{ggplot object of monthly MOUD counts by treatment type (Old vs New)}
-#'   \item{\code{difference_plot}}{ggplot object showing change in MOUD counts (New – Old)}
+#'   \item{\code{difference_plot}}{ggplot object showing change in MOUD counts (New vs Old)}
 #'   \item{\code{difference_data}}{Data frame with the following columns:
 #'   \code{treatment}, \code{year}, \code{month}, \code{old_count}, \code{new_count},
 #'   \code{difference}, and \code{date}}
