@@ -13,8 +13,10 @@
 #' \describe{
 #'   \item{\code{count_plot}}{ggplot object of monthly MOUD counts by treatment type (Old vs New)}
 #'   \item{\code{difference_plot}}{ggplot object showing change in MOUD counts (New – Old)}
-#'   \item{\code{difference_data}}{Data frame with treatment, year, month, old_count, new_count, difference, and date}
-#' }
+#'   \item{\code{difference_data}}{Data frame with the following columns:
+#'   \code{treatment}, \code{year}, \code{month}, \code{old_count}, \code{new_count},
+#'   \code{difference}, and \code{date}}
+
 #'
 #' @importFrom dplyr mutate select rename bind_rows left_join
 #' @importFrom ggplot2 ggplot aes geom_line geom_col facet_wrap labs theme_minimal theme element_text
@@ -22,16 +24,20 @@
 
 compare_moud <- function(old_path, new_path) {
   N_ID <- treatment <- new_count <- old_count <- difference <- NULL
-  # read and label the datasets
-  old_df <- read.csv(old_path, stringsAsFactors = FALSE) %>%
-    dplyr::mutate(version = "Old")
 
-  new_df <- read.csv(new_path, stringsAsFactors = FALSE) %>%
+  # read and label the datasets
+  old <- read.csv(old_path, stringsAsFactors = FALSE)
+  new <- read.csv(new_path, stringsAsFactors = FALSE)
+
+  old_df <- old %>%
+    dplyr::mutate(version = "Old")
+  new_df <- new %>%
     dplyr::mutate(version = "New")
 
   # combine datasets and add date
   combined <- dplyr::bind_rows(old_df, new_df) %>%
-    dplyr::mutate(date = as.Date(paste(year, month, "01", sep = "-")))
+  dplyr::mutate(date = as.Date(paste(year, month, "01", sep = "-")))
+
 
   # plot 1: time series of MOUD counts by treatment
   count_plot <- ggplot2::ggplot(combined, ggplot2::aes(x = date, y = N_ID, color = version, linetype = version)) +
@@ -52,11 +58,11 @@ compare_moud <- function(old_path, new_path) {
     )
 
   # prepare difference dataset
-  old_df2 <- read.csv(old_path, stringsAsFactors = FALSE) %>%
+  old_df2 <- old %>%
     dplyr::select(treatment, month, year, N_ID) %>%
     dplyr::rename(old_count = N_ID)
 
-  new_df2 <- read.csv(new_path, stringsAsFactors = FALSE) %>%
+  new_df2 <- new %>%
     dplyr::select(treatment, month, year, N_ID) %>%
     dplyr::rename(new_count = N_ID)
 
@@ -65,6 +71,7 @@ compare_moud <- function(old_path, new_path) {
       difference = new_count - old_count,
       date = as.Date(paste(year, month, "01", sep = "-"))
     )
+
 
   # plot 2: difference in MOUD counts
   difference_plot <- ggplot2::ggplot(diff_df, ggplot2::aes(x = date, y = difference, fill = difference > 0)) +
