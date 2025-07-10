@@ -22,7 +22,7 @@ crc(
 
 \item{binary.variables}{List of Columns: List containing columns of binary variables indicating involvement in the given database}
 
-\item{method}{String: Selection for the spatial capture-recapture method - either poisson, negbin, or DBCount}
+\item{method}{String: Selection for the spatial capture-recapture method - either poisson, or negbin}
 
 \item{formula.selection}{String: Selection for formula decision when \code{method} is poisson or negbin - either aic, corr, or stepwise}
 

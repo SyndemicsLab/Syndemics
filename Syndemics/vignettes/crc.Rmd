@@ -1,0 +1,127 @@
+---
+title: "Running the CRC"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Running the CRC}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Capture Recapture Estimation
+
+Capture recapture (CRC) estimation derives from ecological studies where the entire population may not be observed at one time. However, by taking different estimates over time we can form an educated guess about the size of $N$. The nuance in this case, is the formation of 'multi-systems estimation' as an approach to the CRC, where instead of gathering information over time, we gather information which is spatially linked, allowing us to build a guess to the size of $N$ from longitudinally linked data.
+
+## What is CRC ?
+In the backend, CRC is really just running a stepwise negative binomial or poisson linear regression using these linked database counts as covariables. In the current implementation, CRC produces an estimate given a single year of data (within a given subgroup). What this means is, given data of OUD Origin (derived from the PHD), you must loop through the years to derive the $N$ for that year. For subgroup analysis you must loop through both year AND stratification.
+
+## Some Issues
+As we stratify further and further, we begin to see a lot of suppression - where the PHD mandates we remove the counts due to danger of identification. Because this mandate affects counts between 1:10, we perturb the data iteratively and build confidence intervals around our estimates.
+
+# Non-stratified
+
+```{r non-stratified, eval=FALSE}
+library(dplyr)
+library(Syndemics)
+library(doParallel)
+
+#data <- [OUDOrigin Data Here]
+results <- list()
+unique_years <- unique(data$year)
+n_cores <- detectCores() - 1
+
+registerDoParallel(n_cores)
+for(i in unique_years) {
+  estimates <- foreach(j = 1:1000, .combine = 'rbind', .packages = c("dplyr", "Syndemics")) %dopar% {
+    set.seed(j)
+    
+    output <- data %>% 
+      mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>%
+      filter(year == i) %>% 
+      select(-c(final_re, final_sex, age_grp_ten)) %>%
+      unique()
+    
+    Syndemics::crc(output, "N_ID", c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
+                   formula.selection = "stepwise", method = "poisson", 
+                   opts.stepwise = list(direction = "forward",
+                                        verbose = FALSE))$estimate
+  }
+  results[[as.character(i)]] <- list(crcMean = mean(estimates), crcMinimum = min(estimates), crcMaximum = max(estimates))
+}
+stopImplicitCluster()
+
+output <- do.call(rbind, results) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column(var = "year") %>%
+  mutate(year = as.integer(year)) %>%
+  left_join(., data %>% 
+              select(-c(final_re, final_sex, age_grp_ten)) %>%
+              unique() %>%
+              group_by(year) %>%
+              summarise(., known = sum(N_ID))
+            ) %>% 
+  rowwise() %>%
+  mutate(estimate = crcMean + known,
+         estimateMin = crcMinimum + known,
+         estimateMax = crcMaximum + known)
+
+```
+
+# Stratified
+
+```{r stratified, eval=FALSE}
+library(dplyr)
+library(Syndemics)
+library(doParallel)
+
+#data <- [Stratified OUDOrigin Data Here]
+# subgroup <- [Unique subgroups here]
+results <- list()
+output_list <- list()
+unique_years <- unique(data$year)
+n_cores <- detectCores() - 1
+
+registerDoParallel(n_cores)
+for (s in subgroup) {
+  for(i in unique_years) {
+    estimates <- foreach(j = 1:1000, .combine = 'rbind', .packages = c("dplyr", "Syndemics")) %dopar% {
+      set.seed(j)
+      
+      output <- data %>% 
+        mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>%
+        filter(year == i) %>% 
+        select(-c(final_re, final_sex, age_grp_ten)) %>%
+        unique()
+      
+      Syndemics::crc(output, "N_ID", c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
+                     formula.selection = "stepwise", method = "poisson", 
+                     opts.stepwise = list(direction = "forward",
+                                          verbose = FALSE))$estimate
+    }
+    results[[as.character(i)]] <- list(crcMean = mean(estimates), crcMinimum = min(estimates), crcMaximum = max(estimates))
+  }
+  stopImplicitCluster()
+  
+  output_list[[s]] <- do.call(rbind, results) %>% 
+    as.data.frame() %>%
+    tibble::rownames_to_column(var = "year") %>%
+    mutate(year = as.integer(year)) %>%
+    left_join(., data %>% 
+                select(-c(final_re, final_sex, age_grp_ten)) %>%
+                unique() %>%
+                group_by(year) %>%
+                summarise(., known = sum(N_ID))
+              ) %>% 
+    rowwise() %>%
+    mutate(estimate = crcMean + known,
+           estimateMin = crcMinimum + known,
+           estimateMax = crcMaximum + known) 
+}
+output <- do.call(rbind, output_list)
+```

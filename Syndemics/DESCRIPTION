@@ -17,4 +17,10 @@ Imports:
     MASS,
     readxl,
     tidyr,
-    rlist
+    rlist,
+    magrittr,
+    dplyr
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
