@@ -15,7 +15,8 @@ combine_files <- function(path) {
 
 # detects outliers in subgroups
 detect_outliers <- function(df, value_var = "N_ID",
-                            group_candidates = c("year","month","age_grp_twenty","final_sex","final_re")) {
+                            group_candidates = c("year","month","age_grp_twenty",
+                                                 "final_sex","final_re")) {
 
   # uses only the grouping columns that are present in the data
   present_groups <- intersect(group_candidates, names(df))
