@@ -4,8 +4,19 @@
 \name{Syndemics-package}
 \alias{Syndemics}
 \alias{Syndemics-package}
-\title{Syndemics: A collection of miscellaneous functions created for internal use with the Boston Medical Center Syndemics lab}
+\title{Syndemics: Syndemics Lab at Boston Medical Center Tools for Interacting with Simulation Models}
 \description{
-The Syndemics Lab is a research unit with Boston Medical Center. Our primary work involves dynamic simulations for predicting and analyzing opioid use disorder, HIV, and HEP-CE. This package is a collection of commonly used workflow functionalizations serving analytic purposes.
+The Syndemics Lab is a research unit with Boston Medical Center. Our primary work involves dynamic simulations for predicting and analyzing opioid use disorder, HIV, and HEP-CE. This package is a collection of commonly used workflow functionalizations serving analytic purposes and allowing outside users easier access to interacting with the input and output structures for RESPOND \url{https://www.syndemicslab.org/respond}. As we update our models while receiving user input functions may change within this package.
+}
+\author{
+\strong{Maintainer}: Matthew Carroll \email{matthew.carroll@bmc.org}
+
+Authors:
+\itemize{
+  \item Ryan O'Dea \email{ryan.odea@bmc.org}
+  \item Dimitri Baptiste \email{dimitri.baptiste@bmc.org}
+  \item Hana Zwick \email{hana.zwick@bmc.org}
+}
+
 }
 \keyword{internal}
