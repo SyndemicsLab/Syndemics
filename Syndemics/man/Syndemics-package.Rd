@@ -6,7 +6,15 @@
 \alias{Syndemics-package}
 \title{Syndemics: Syndemics Lab at Boston Medical Center Tools for Interacting with Simulation Models}
 \description{
-The Syndemics Lab is a research unit with Boston Medical Center. Our primary work involves dynamic simulations for predicting and analyzing opioid use disorder, HIV, and HEP-CE. This package is a collection of commonly used workflow functionalizations serving analytic purposes and allowing outside users easier access to interacting with the input and output structures for RESPOND \url{https://www.syndemicslab.org/respond}. As we update our models while receiving user input functions may change within this package.
+Tools for dynamic simulation modeling and policy analysis of opioid use disorder, HIV, and Hepatitis C epidemics. This package provides workflow functions for interacting with RESPOND simulation models, enabling users to perform simulated costing analysis of different policy interventions and public health measures. The baseline primary function implements an extended Capture-Recapture prevalence estimation method as described in Barocas et al. (2018) doi:10.2105/AJPH.2018.304673, accessible through the crc function, which estimates total background population. Additional functions support input preparation and output analysis for dynamic epidemic simulations. RESPOND models and methodology details available at \url{https://www.syndemicslab.org/respond}.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/SyndemicsLab/Syndemics}
+  \item Report bugs at \url{https://github.com/SyndemicsLab/Syndemics/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Matthew Carroll \email{matthew.carroll@bmc.org}

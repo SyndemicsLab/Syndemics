@@ -1,9 +1,9 @@
 Package: Syndemics
 Type: Package
 Title: Syndemics Lab at Boston Medical Center Tools for Interacting with Simulation Models
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(person(given = "Ryan",
-                    family = "O\'Dea",
+                    family = "O'Dea",
                     role = c("aut"),
                     email = "ryan.odea@bmc.org"),
              person(given = "Matthew",
@@ -18,12 +18,16 @@ Authors@R: c(person(given = "Ryan",
                     family = "Zwick",
                     role = c("aut"),
                     email = "hana.zwick@bmc.org")) 
-Maintainer: Matthew Carroll <matthew.carroll@bmc.org>
-Description: The Syndemics Lab is a research unit with Boston Medical Center. 
-    Our primary work involves dynamic simulations for predicting and analyzing opioid use disorder, HIV, and HEP-CE. 
-    This package is a collection of commonly used workflow functionalizations serving analytic purposes and allowing outside users 
-    easier access to interacting with the input and output structures for RESPOND <https://www.syndemicslab.org/respond>.
-    As we update our models while receiving user input functions may change within this package.
+Description: Tools for dynamic simulation modeling and policy analysis of 
+    opioid use disorder, HIV, and Hepatitis C epidemics. This package provides 
+    workflow functions for interacting with RESPOND simulation models, enabling 
+    users to perform simulated costing analysis of different policy interventions 
+    and public health measures. The baseline primary function implements an 
+    extended Capture-Recapture prevalence estimation method 
+    as described in Barocas et al. (2018) doi:10.2105/AJPH.2018.304673, 
+    accessible through the crc function, which estimates total background population. 
+    Additional functions support input preparation and output analysis for dynamic epidemic simulations. 
+    RESPOND models and methodology details available at <https://www.syndemicslab.org/respond>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
