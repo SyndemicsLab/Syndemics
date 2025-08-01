@@ -27,101 +27,399 @@ As we stratify further and further, we begin to see a lot of suppression - where
 # Non-stratified
 
 ```{r non-stratified, eval=FALSE}
+
+## Initialising the Libraries
 library(dplyr)
 library(Syndemics)
 library(doParallel)
+library(readr)
 
-#data <- [OUDOrigin Data Here]
+## Loading non-stratified OUD_Origin data
+data <- readr::read_csv("C:/Users/KAMULCHA/Desktop/Origin Raw Files Data Pull 07.17.25/OUDOrigin_17JUL2025.csv")
+
 results <- list()
 unique_years <- unique(data$year)
 n_cores <- detectCores() - 1
 
 registerDoParallel(n_cores)
-for(i in unique_years) {
+
+for (i in unique_years) {
+  
   estimates <- foreach(j = 1:1000, .combine = 'rbind', .packages = c("dplyr", "Syndemics")) %dopar% {
     set.seed(j)
     
-    output <- data %>% 
+    input <- data %>% 
       mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>%
       filter(year == i) %>% 
-      select(-c(final_re, final_sex, age_grp_ten)) %>%
-      unique()
+      distinct()
     
-    Syndemics::crc(output, "N_ID", c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
-                   formula.selection = "stepwise", method = "poisson", 
-                   opts.stepwise = list(direction = "forward",
-                                        verbose = FALSE))$estimate
+    Syndemics::crc(
+      input,
+      "N_ID",
+      c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
+      formula.selection = "stepwise",
+      method = "poisson",
+      opts.stepwise = list(direction = "forward", verbose = FALSE)
+    )$estimate
   }
-  results[[as.character(i)]] <- list(crcMean = mean(estimates), crcMinimum = min(estimates), crcMaximum = max(estimates))
+  
+  crcMean  <- mean(estimates)
+  crcMin   <- min(estimates)
+  crcMax   <- max(estimates)
+  SE_estimate   <- sd(estimates)
+  estimate.LCI  <- crcMean - 1.96 * SE_estimate
+  estimate.UCI  <- crcMean + 1.96 * SE_estimate
+  
+  known <- data %>%
+    filter(year == i & N_ID != -1) %>%
+    summarise(known = sum(N_ID)) %>%
+    pull(known)
+  print(known)
+  
+  est    <- crcMean + known
+  estMin <- crcMin  + known
+  estMax <- crcMax  + known
+  total.LCI    <- est - 1.96 * SE_estimate
+  total.UCI  <- est + 1.96 * SE_estimate
+  
+  results[[as.character(i)]] <- data.frame(
+    Year          = i,
+    Known         = known,
+    Estimated     = crcMean,
+    SE_Estimated  = SE_estimate,
+    
+    LCI_Estimated = estimate.LCI,
+    UCI_Estimated = estimate.UCI,
+    
+    
+    CRCMin       = estMin,
+    CRCMax       = estMax,
+    
+    CRC_Total    = est,
+    LCI_Total    = total.LCI,
+    UCI_Total    = total.UCI
+
+  )
 }
+
 stopImplicitCluster()
 
-output <- do.call(rbind, results) %>% 
-  as.data.frame() %>%
-  tibble::rownames_to_column(var = "year") %>%
-  mutate(year = as.integer(year)) %>%
-  left_join(., data %>% 
-              select(-c(final_re, final_sex, age_grp_ten)) %>%
-              unique() %>%
-              group_by(year) %>%
-              summarise(., known = sum(N_ID))
-            ) %>% 
-  rowwise() %>%
-  mutate(estimate = crcMean + known,
-         estimateMin = crcMinimum + known,
-         estimateMax = crcMaximum + known)
+# Bind rows into final output
+overall_output <- bind_rows(results)
 
+# Export to CSV
+write_csv(overall_output, "CRCtotal.csv")
 ```
 
 # Stratified
+##Note: For Age, we only use the data stratified according to the groups starting
+ at 20 years of age
 
 ```{r stratified, eval=FALSE}
+
+## Initialising the Libraries
 library(dplyr)
 library(Syndemics)
 library(doParallel)
+library(readr)
 
-#data <- [Stratified OUDOrigin Data Here]
-# subgroup <- [Unique subgroups here]
-results <- list()
-output_list <- list()
-unique_years <- unique(data$year)
+## Reading the Origin Data Stratified by Race, Age and Sex
+race_data <- readr::read_csv("C:/Users/KAMULCHA/Desktop/Origin Raw Files Data Pull 07.17.25/OUDOrigin_Race_17JUL2025.csv")
+age_data <- readr::read_csv("C:/Users/KAMULCHA/Desktop/Origin Raw Files Data Pull 07.17.25/OUDOrigin_Twenty_17JUL2025.csv")
+sex_data <- readr::read_csv("C:/Users/KAMULCHA/Desktop/Origin Raw Files Data Pull 07.17.25/OUDOrigin_Sex_17JUL2025.csv")
+
+## Reading the Crosswalks
+race_xwalk <- readr::read_csv("C:/Users/KAMULCHA/Desktop/RESPOND Croswalk/race.csv")
+age_xwalk <- readr::read_csv("C:/Users/KAMULCHA/Desktop/RESPOND Croswalk/age_twenty.csv")
+sex_xwalk <- readr::read_csv("C:/Users/KAMULCHA/Desktop/RESPOND Croswalk/sex.csv")
+
+
+## Defining the subgroups for each Data Set
+race_subgroup <- unique(race_data$final_re) 
+sex_subgroup <- unique(sex_data$final_sex)
+
+## Initializing the Variables for the nested for loop
+
+race_results <- list()
+age_results <- list()
+sex_results <- list()
+
+race_output_list <- list()
+age_output_list <- list()
+sex_output_list <- list()
+
+race_unique_years <- unique(race_data$year)
+age_unique_years <- unique(age_data$year)
+sex_unique_years <- unique(sex_data$year)
+
 n_cores <- detectCores() - 1
 
+## Running for Race ###################################################################################################
+
 registerDoParallel(n_cores)
-for (s in subgroup) {
-  for(i in unique_years) {
-    estimates <- foreach(j = 1:1000, .combine = 'rbind', .packages = c("dplyr", "Syndemics")) %dopar% {
+for (s in race_subgroup) {
+  for(i in race_unique_years) {
+    race_estimates <- foreach(j = 1:1000, .combine = 'rbind', .packages = c("dplyr", "Syndemics")) %dopar% {
       set.seed(j)
       
-      output <- data %>% 
+      race_output <- race_data %>% 
         mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>%
-        filter(year == i) %>% 
-        select(-c(final_re, final_sex, age_grp_ten)) %>%
+        filter(year == i & final_re == s) %>% 
         unique()
       
-      Syndemics::crc(output, "N_ID", c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
+      Syndemics::crc(race_output, "N_ID", c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
                      formula.selection = "stepwise", method = "poisson", 
                      opts.stepwise = list(direction = "forward",
-                                          verbose = FALSE))$estimate
-    }
-    results[[as.character(i)]] <- list(crcMean = mean(estimates), crcMinimum = min(estimates), crcMaximum = max(estimates))
-  }
-  stopImplicitCluster()
+                                         verbose = FALSE))$estimate
+    } 
+
+    # Calculate summary stats from CRC estimates
+    crcMean <- mean(race_estimates)
+    crcMin  <- min(race_estimates)
+    crcMax  <- max(race_estimates)
+    SE_estimate   <- sd(race_estimates)
+    estimate.LCI  <- crcMean - 1.96 * SE_estimate
+    estimate.UCI  <- crcMean + 1.96 * SE_estimate
+
+    # Get known sum for that race-year
+    known <- race_data %>%
+      filter(year == i & final_re == s) %>%
+      filter(N_ID != -1) %>%
+      summarise(known = sum(N_ID)) %>%
+      pull(known)
+    print(known)
+
+    # Add known to CRC estimates
+    est       <- crcMean + known
+    estMin    <- crcMin  + known
+    estMax    <- crcMax  + known
+    total.LCI <- est - 1.96 * SE_estimate
+    total.UCI <- est + 1.96 * SE_estimate
   
-  output_list[[s]] <- do.call(rbind, results) %>% 
-    as.data.frame() %>%
-    tibble::rownames_to_column(var = "year") %>%
-    mutate(year = as.integer(year)) %>%
-    left_join(., data %>% 
-                select(-c(final_re, final_sex, age_grp_ten)) %>%
-                unique() %>%
-                group_by(year) %>%
-                summarise(., known = sum(N_ID))
-              ) %>% 
-    rowwise() %>%
-    mutate(estimate = crcMean + known,
-           estimateMin = crcMinimum + known,
-           estimateMax = crcMaximum + known) 
+    
+
+    race_results[[as.character(i)]] <- data.frame(
+    Race          = s,
+    Year          = i,
+    Known         = known,
+    Estimated     = crcMean,
+    SE_Estimated  = SE_estimate,
+    
+    LCI_Estimated = estimate.LCI,
+    UCI_Estimated = estimate.UCI,
+    
+    
+    CRCMin       = estMin,
+    CRCMax       = estMax,
+    
+    CRC_Total    = est,
+    LCI_Total    = total.LCI,
+    UCI_Total    = total.UCI
+  
+ )
+  }
+
+  race_output_list[[as.character(s)]] <- bind_rows(race_results)
 }
-output <- do.call(rbind, output_list)
+
+stopImplicitCluster()
+
+## Binding the Output
+race_output <- bind_rows(race_output_list)
+
+## Arranging the Columns by Year and Race
+race_output <- race_output %>% arrange(Year,Race)
+
+## Joining the Labelled Categories for Race from race_xwalk
+race_output$Race <- as.character(race_output$Race)
+
+## Arranging the columns of Output Uniformly for all stratified results
+race_output <- race_output %>% 
+            left_join(race_xwalk, by=c("Race" = "final_re")) %>% 
+            select(Year, race, Known, Estimated, SE_Estimated, LCI_Estimated, UCI_Estimated, CRCMin, CRCMax, CRC_Total, LCI_Total, UCI_Total)
+
+
+## Export to CSV
+readr::write_csv(race_output, "race_output.csv")
+
+
+## Running for Age.  ###################################################################################################
+registerDoParallel(n_cores)
+
+age_output_list <- list()
+
+for (s in age_subgroup) {
+  age_results <- list()
+  
+  for (i in age_unique_years) {
+    
+    age_estimates <- foreach(j = 1:1000, .combine = 'rbind', .packages = c("dplyr", "Syndemics")) %dopar% {
+      set.seed(j)
+      
+      age_input <- age_data %>%
+        mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>%
+        filter(year == i & age_grp_twenty == s) %>%
+        distinct()
+
+      Syndemics::crc(
+        age_input,
+        "N_ID",
+        c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
+        formula.selection = "stepwise",
+        method = "poisson",
+        opts.stepwise = list(direction = "forward", verbose = FALSE)
+      )$estimate
+    }
+
+    crcMean <- mean(age_estimates)
+    crcMin  <- min(age_estimates)
+    crcMax  <- max(age_estimates)
+    SE_estimate   <- sd(age_estimates)
+    estimate.LCI  <- crcMean - 1.96 * SE_estimate
+    estimate.UCI  <- crcMean + 1.96 * SE_estimate
+
+    known <- age_data %>%
+      filter(year == i & age_grp_twenty == s & N_ID != -1) %>%
+      summarise(known = sum(N_ID)) %>%
+      pull(known)
+    print(known)
+
+    est    <- crcMean + known
+    estMin <- crcMin  + known
+    estMax <- crcMax  + known
+    total.LCI <- est - 1.96 * SE_estimate
+    total.UCI <- est + 1.96 * SE_estimate
+   
+
+    age_results[[as.character(i)]] <- data.frame(
+      Age    = s,
+      Year     = i,
+      Known    = known,
+      Estimated     = crcMean,
+      SE_Estimated  = SE_estimate,
+    
+      LCI_Estimated = estimate.LCI,
+      UCI_Estimated = estimate.UCI,
+    
+     
+      CRCMin       = estMin,
+      CRCMax       = estMax,
+    
+      CRC_Total    = est,
+      LCI_Total    = total.LCI,
+      UCI_Total    = total.UCI
+    )
+  }
+
+  age_output_list[[as.character(s)]] <- bind_rows(age_results)
+}
+
+stopImplicitCluster()
+
+## Binding the output
+age_output <- bind_rows(age_output_list)
+
+## Arranging the Columns by Year and Age
+age_output <- age_output %>% arrange(Year,Age)
+
+## Joining the Labelled Categories for Age from age_xwalk
+age_output$Age <- as.character(age_output$Age)
+
+## Arranging the columns of Output Uniformly for all stratified results
+age_output <- age_output %>% 
+              left_join(age_xwalk, by=c('Age'='age_grp_twenty')) %>% 
+              select(Year, age_twenty, Known, Estimated, SE_Estimated, LCI_Estimated, UCI_Estimated, CRCMin, CRCMax, CRC_Total, LCI_Total, UCI_Total)
+
+## Export to CSV
+readr::write_csv(age_output, "age_output.csv")
+
+
+## Running for Sex ###################################################################################################
+  
+registerDoParallel(n_cores)
+
+sex_output_list <- list()
+
+for (s in sex_subgroup) {
+  sex_results <- list()
+  
+  for (i in sex_unique_years) {
+    
+    sex_estimates <- foreach(j = 1:1000, .combine = 'rbind', .packages = c("dplyr", "Syndemics")) %dopar% {
+      set.seed(j)
+      
+      sex_input <- sex_data %>%
+        mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>%
+        filter(year == i & final_sex == s) %>%
+        distinct()
+
+      Syndemics::crc(
+        sex_input,
+        "N_ID",
+        c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
+        formula.selection = "stepwise",
+        method = "poisson",
+        opts.stepwise = list(direction = "forward", verbose = FALSE)
+      )$estimate
+    }
+
+    crcMean <- mean(sex_estimates)
+    crcMin  <- min(sex_estimates)
+    crcMax  <- max(sex_estimates)
+    SE_estimate   <- sd(sex_estimates)
+    estimate.LCI  <- crcMean - 1.96 * SE_estimate
+    estimate.UCI  <- crcMean + 1.96 * SE_estimate 
+
+    known <- sex_data %>%
+      filter(year == i & final_sex == s & N_ID != -1) %>%
+      summarise(known = sum(N_ID)) %>%
+      pull(known)
+    print(known)
+
+    est    <- crcMean + known
+    estMin <- crcMin  + known
+    estMax <- crcMax  + known
+    total.LCI <- est - 1.96 * SE_estimate
+    total.UCI <- est + 1.96 * SE_estimate
+
+    sex_results[[as.character(i)]] <- data.frame(
+      Sex      = s,
+      Year     = i,
+      Known    = known,
+      Estimated     = crcMean,
+      SE_Estimated  = SE_estimate,
+    
+      LCI_Estimated = estimate.LCI,
+      UCI_Estimated = estimate.UCI,
+     
+      CRCMin       = estMin,
+      CRCMax       = estMax,
+    
+      CRC_Total    = est,
+      LCI_Total    = total.LCI,
+      UCI_Total    = total.UCI
+    )
+  }
+  sex_output_list[[as.character(s)]] <- bind_rows(sex_results)
+}
+stopImplicitCluster()
+
+## Binding the output
+sex_output <- bind_rows(sex_output_list)
+
+## Arranging the output by Year and Sex
+sex_output <- sex_output %>% arrange(Year,Sex)
+
+## Joining the Labelled Categories for Sex from sex_xwalk
+sex_output$Sex <- as.character(sex_output$Sex)
+
+## Arranging the columns of Output Uniformly for all stratified results
+sex_output <- sex_output %>% 
+              left_join(sex_xwalk, by = c("Sex" = "final_sex")) %>% 
+              select(Year, sex, Known, Estimated, SE_Estimated, LCI_Estimated, UCI_Estimated, CRCMin, CRCMax, CRC_Total, LCI_Total, UCI_Total)
+
+## Export to CSV
+readr::write_csv(sex_output, "sex_output.csv")
+
+ 
 ```
