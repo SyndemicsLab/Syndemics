@@ -35,7 +35,7 @@ library(doParallel)
 library(readr)
 
 ## Loading non-stratified OUD_Origin data
-data <- readr::read_csv("C:/Users/KAMULCHA/Desktop/Origin Raw Files Data Pull 07.17.25/OUDOrigin_17JUL2025.csv")
+#data <- readr::read_csv("OUD_Origin_path.csv") 
 
 results <- list()
 unique_years <- unique(data$year)
@@ -124,14 +124,14 @@ library(doParallel)
 library(readr)
 
 ## Reading the Origin Data Stratified by Race, Age and Sex
-race_data <- readr::read_csv("C:/Users/KAMULCHA/Desktop/Origin Raw Files Data Pull 07.17.25/OUDOrigin_Race_17JUL2025.csv")
-age_data <- readr::read_csv("C:/Users/KAMULCHA/Desktop/Origin Raw Files Data Pull 07.17.25/OUDOrigin_Twenty_17JUL2025.csv")
-sex_data <- readr::read_csv("C:/Users/KAMULCHA/Desktop/Origin Raw Files Data Pull 07.17.25/OUDOrigin_Sex_17JUL2025.csv")
+race_data <- readr::read_csv("OUDOrigin_race_path.csv")
+age_data <- readr::read_csv("OUDOrigin_age_twenty_path.csv")
+sex_data <- readr::read_csv("OUDOrigin_sex_path.csv")
 
 ## Reading the Crosswalks
-race_xwalk <- readr::read_csv("C:/Users/KAMULCHA/Desktop/RESPOND Croswalk/race.csv")
-age_xwalk <- readr::read_csv("C:/Users/KAMULCHA/Desktop/RESPOND Croswalk/age_twenty.csv")
-sex_xwalk <- readr::read_csv("C:/Users/KAMULCHA/Desktop/RESPOND Croswalk/sex.csv")
+race_xwalk <- readr::read_csv("RESPOND Crosswalk_race_path.csv")
+age_xwalk <- readr::read_csv("RESPOND Crosswalk_age_twenty_path.csv")
+sex_xwalk <- readr::read_csv("RESPOND Crosswalk_sex_path.csv")
 
 
 ## Defining the subgroups for each Data Set
@@ -420,6 +420,5 @@ sex_output <- sex_output %>%
 
 ## Export to CSV
 readr::write_csv(sex_output, "sex_output.csv")
-
  
 ```
