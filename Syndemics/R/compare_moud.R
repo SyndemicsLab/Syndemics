@@ -9,14 +9,14 @@
 #' @param old_path Character: File path to the old MOUD dataset (CSV format)
 #' @param new_path Character: File path to the new MOUD dataset (CSV format)
 #'
-#' @return List: A list containing:
+#' @return A list containing:
 #' \describe{
 #'   \item{\code{count_plot}}{ggplot object of monthly MOUD counts by treatment type (Old vs New)}
 #'   \item{\code{difference_plot}}{ggplot object showing change in MOUD counts (New vs Old)}
 #'   \item{\code{difference_data}}{Data frame with the following columns:
 #'   \code{treatment}, \code{year}, \code{month}, \code{old_count}, \code{new_count},
 #'   \code{difference}, and \code{date}}
-
+#' }
 #'
 #' @importFrom dplyr mutate select rename bind_rows left_join
 #' @importFrom ggplot2 ggplot aes geom_line geom_col facet_wrap labs theme_minimal theme element_text
