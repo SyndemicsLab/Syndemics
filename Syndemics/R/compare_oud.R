@@ -1,5 +1,4 @@
-library(data.table)
-library(ggplot2)
+
 
 # combine files into one big dataframe!
 combine_files <- function(path) {
@@ -151,21 +150,3 @@ histogram <- function(data) {
   print(p)
   return(p)
 }
-
-# example
-
-my_data <- combine_files("~/Syndemics/Syndemics/Syndemics/OUDCountData")
-
-time_trends(my_data)
-compare_by_year(my_data)
-histogram(my_data)
-
-
-race_data <- get_race_data(my_data)
-plot_race_data(race_data)
-
-sex_data <- get_sex_data(my_data)
-plot_sex_data(sex_data)
-
-age_data <- get_age_data(my_data)
-plot_age_data(age_data)
