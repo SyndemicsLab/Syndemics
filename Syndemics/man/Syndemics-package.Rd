@@ -4,8 +4,27 @@
 \name{Syndemics-package}
 \alias{Syndemics}
 \alias{Syndemics-package}
-\title{Syndemics: Utility functions for interacting with the Syndemics Lab's RESPOND model}
+\title{Syndemics: Syndemics Lab at Boston Medical Center Tools for Interacting with Simulation Models}
 \description{
-A collection of utility functions created to interact with the Syndemics Lab's data and models. The two primary focuses of this package are the `CRC` function, which is used to preform capture-recapture analysis Wang J, Bernson D, et. al \doi{10.1016/j.lana.2024.100709} which then provides the data for other shell-manipulation functions provided in this package through the other focus, easily manipulating and setting up shell tables for the RESPOND model. RWMA Madushani, Jianing Wang, et. al \doi{10.1371/journal.pone.0310763}
+Tools for dynamic simulation modeling and policy analysis of opioid use disorder, HIV, and Hepatitis C epidemics. This package provides workflow functions for interacting with RESPOND simulation models, enabling users to perform simulated costing analysis of different policy interventions and public health measures. The baseline primary function implements an extended Capture-Recapture prevalence estimation method as described in Barocas et al. (2018) doi:10.2105/AJPH.2018.304673, accessible through the crc function, which estimates total background population. Additional functions support input preparation and output analysis for dynamic epidemic simulations. RESPOND models and methodology details available at \url{https://www.syndemicslab.org/respond}.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/SyndemicsLab/Syndemics}
+  \item Report bugs at \url{https://github.com/SyndemicsLab/Syndemics/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Matthew Carroll \email{matthew.carroll@bmc.org}
+
+Authors:
+\itemize{
+  \item Ryan O'Dea \email{ryan.odea@bmc.org}
+  \item Dimitri Baptiste \email{dimitri.baptiste@bmc.org}
+  \item Hana Zwick \email{hana.zwick@bmc.org}
+}
+
 }
 \keyword{internal}
