@@ -11,6 +11,7 @@
 #' @param bin_size The size ages are grouped by
 #'
 #' @import data.table
+#' @importFrom utils write.csv
 #' @export
 
 build_background_mortality_file <- function(files,
@@ -47,6 +48,9 @@ extract_background_mortality <- function(file_path, bin_size = 20, age_groups = 
   # Rename columns to standard names
   setnames(dt, "Probability of dying between ages x and x + 1", "year_prob", skip_absent = TRUE)
   setnames(dt, "Number dying between ages x and x + 1", "year_deaths", skip_absent = TRUE)
+  
+  #Data table bindings
+  year_prob <- year_deaths <- V1 <- NULL
 
   dt[, year_prob := as.numeric(year_prob)
      ][, year_deaths := as.numeric(year_deaths)]
@@ -79,6 +83,9 @@ create_and_fill_table <- function(background_mortality,
                                   races = c("black", "hispanic", "white"),
                                   sexes = c("female", "male"),
                                   age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100")) {
+  #Data table bindings
+  agegrp <- NULL
+  
   combinations <- expand.grid(races = races, sexes = sexes, stringsAsFactors = FALSE)
   combinations <- as.data.table(combinations)
   result_table <- combinations[rep(seq_len(nrow(combinations)), each = length(age_groups))]
