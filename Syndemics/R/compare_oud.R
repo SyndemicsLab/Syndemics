@@ -25,6 +25,7 @@ time_trends <- function(data) {
          x = "Year",
          y = "Total Count",
          color = "Data Source") +
+    scale_y_continuous(labels = scales::label_comma())
     theme_minimal() +
     theme(legend.position = "bottom")
 
@@ -78,6 +79,7 @@ plot_race_data <- function(race_data) {
          x = "Year",
          y = "Count",
          color = "Race") +
+    scale_y_continuous(labels = scales::label_comma())
     theme_minimal() +
     theme(legend.position = "bottom")
 
@@ -102,6 +104,7 @@ plot_sex_data <- function(sex_data) {
          x = "Year",
          y = "Count",
          color = "Sex") +
+    scale_y_continuous(labels = scales::label_comma())
     theme_minimal() +
     theme(legend.position = "bottom")
 
@@ -127,6 +130,7 @@ plot_age_data <- function(age_data) {
          x = "Year",
          y = "Count",
          color = "Age Group") +
+    scale_y_continuous(labels = scales::label_comma())
     theme_minimal() +
     theme(legend.position = "bottom")
 
@@ -141,6 +145,7 @@ histogram <- function(data) {
     labs(title = "Distribution of OUD Counts",
          x = "Count",
          y = "Frequency") +
+    scale_y_continuous(labels = scales::label_comma())
     theme_minimal()
 
   print(p)
