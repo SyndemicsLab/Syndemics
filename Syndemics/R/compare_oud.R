@@ -1,3 +1,29 @@
+#' OUD Count Comparison and Visualization
+#'
+#' A collection of functions for analyzing and visualizing OUD count data across multiple files.
+#' These functions support loading and combining datasets, filtering
+#' by demographic indicators (race, sex, age), and creating plots.
+#'
+#' Functions included:
+#' \describe{
+#'   \item{\code{combine_files(path)}}{Reads and merges all files in a given directory, adding a \code{source_file} column.}
+#'   \item{\code{time_trends(data)}}{Creates a line plot showing total OUD counts over time for each data source.}
+#'   \item{\code{compare_by_year(data)}}{Generates a table comparing annual counts across files.}
+#'   \item{\code{get_race_data(data)}}{Filters data for files with "Race" in the filename.}
+#'   \item{\code{get_sex_data(data)}}{Filters data for files with "Sex" in the filename.}
+#'   \item{\code{get_age_data(data)}}{Filters data for files with "Twenty" in the filename (age groups).}
+#'   \item{\code{get_monthly_data(data)}}{Filters data for files with "Monthly" in the filename.}
+#'   \item{\code{plot_race_data(race_data)}}{Plots total OUD counts by race over time.}
+#'   \item{\code{plot_sex_data(sex_data)}}{Plots total OUD counts by sex over time.}
+#'   \item{\code{plot_age_data(age_data)}}{Plots total OUD counts by age group over time.}
+#'   \item{\code{histogram(data)}}{Creates a histogram showing the distribution of OUD counts.}
+#' }
+#'
+#'
+#' @section Dependencies: \code{data.table} and \code{ggplot2}
+#'
+#'
+#' @export
 
 
 # combine files into one big dataframe!
