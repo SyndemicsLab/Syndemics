@@ -18,7 +18,6 @@ extract_background_mortality(
 \item{age_groups}{A list of age groups}
 }
 \description{
-Input: CDC Life Tables
-Output: data.table containing the weekly probabilities
+Function used to extract background mortality values based on age from a single yearly CDC NVSS life table
 }
 \keyword{internal}
