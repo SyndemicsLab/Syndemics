@@ -27,19 +27,16 @@ As we stratify further and further, we begin to see a lot of suppression - where
 
 ```{r run_crc}
 run_crc <- function(data, strata = NULL, crosswalk = NULL, from_col = NULL, 
-                    to_col = NULL, category_label = NULL) {
+                    to_col = NULL, category_label = NULL, 
+                    seed = 2025, nboot = 1000, ci = 0.95) {
   library(dplyr)
   library(doParallel)
   library(foreach)
   library(Syndemics)
   
   n_cores <- detectCores() - 1
-  
-  if (!is.null(strata)) {
-    subgroup <- unique(data[[strata]])
-    } else {
-    subgroup <- 1
-  }
+  z_score <- qnorm(1 - (1 - ci) / 2)
+  subgroup <- if (!is.null(strata)) unique(data[[strata]]) else 1L
   
   unique_years <- unique(data$year)
   results <- list()
@@ -50,11 +47,11 @@ run_crc <- function(data, strata = NULL, crosswalk = NULL, from_col = NULL,
   for (s in subgroup) {
     for (i in unique_years) {
       estimates <- foreach(
-        j = 1:1000,
+        j = 1:nboot,
         .combine = "rbind",
         .packages = c("dplyr", "Syndemics")
         ) %dopar% {
-        set.seed(j)
+        set.seed(seed + j)
         output <- data %>%
          mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>% 
            {
@@ -96,13 +93,11 @@ run_crc <- function(data, strata = NULL, crosswalk = NULL, from_col = NULL,
         Known = known,
         Estimated = mean(estimates),
         SE_Estimated = sd(estimates),
-        LCI_Estimated = mean(estimates) - 1.96 * sd(estimates),
-        UCI_Estimated = mean(estimates) + 1.96 * sd(estimates),
-        CRCMin = min(estimates),
-        CRCMax = max(estimates),
+        LCI_Estimated = mean(estimates) - z_score * sd(estimates),
+        UCI_Estimated = mean(estimates) + z_score * sd(estimates),
         CRC_Total = mean(estimates) + known,
-        LCI_Total = mean(estimates) + known - 1.96 * sd(estimates),
-        UCI_Total = mean(estimates) + known + 1.96 * sd(estimates)
+        LCI_Total = mean(estimates) + known - z_score * sd(estimates),
+        UCI_Total = mean(estimates) + known + z_score * sd(estimates)
       )
       
       if (!is.null(strata)) {
