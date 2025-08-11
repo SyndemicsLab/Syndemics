@@ -10,7 +10,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE
 )
 ```
 
@@ -24,127 +25,125 @@ In the backend, CRC is really just running a stepwise negative binomial or poiss
 ## Some Issues
 As we stratify further and further, we begin to see a lot of suppression - where the PHD mandates we remove the counts due to danger of identification. Because this mandate affects counts between 1:10, we perturb the data iteratively and build confidence intervals around our estimates.
 
-```{r stratified, eval=FALSE}
-## Initialising the Libraries
-library(dplyr)
-library(Syndemics)
-library(doParallel)
-```
-
-
-```{r run_crc, eval = FALSE}
-run_crc <- function(data, strata = NULL) {
-n_cores <- detectCores() - 1
-
-if (!is.null(strata)) {
-subgroup <- unique(data[[strata]]) }
-
-else {
-  subgroup=1
-}
-
-unique_years <- unique(data$year)
-
-## Initializing the Variables for the nested for loop
-results <-list()
-output <-list()
-output_list <- list()
-
-registerDoParallel(n_cores)
-for (s in subgroup) {
-  for(i in unique_years) {
-      estimates <- foreach(j = 1:1000, .combine = 'rbind', .packages = c("dplyr", "Syndemics")) %dopar% {
-      set.seed(j)
+```{r run_crc}
+run_crc <- function(data, strata = NULL, crosswalk = NULL, from_col = NULL, 
+                    to_col = NULL, category_label = NULL) {
+  library(dplyr)
+  library(doParallel)
+  library(foreach)
+  library(Syndemics)
+  
+  n_cores <- detectCores() - 1
+  
+  if (!is.null(strata)) {
+    subgroup <- unique(data[[strata]])
+    } else {
+    subgroup <- 1
+  }
+  
+  unique_years <- unique(data$year)
+  results <- list()
+  output_list <- list()
+  
+  registerDoParallel(n_cores)
+  
+  for (s in subgroup) {
+    for (i in unique_years) {
+      estimates <- foreach(
+        j = 1:1000,
+        .combine = "rbind",
+        .packages = c("dplyr", "Syndemics")
+        ) %dopar% {
+        set.seed(j)
+        output <- data %>%
+         mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>% 
+           {
+            if (is.null(strata)) {
+              filter(., .data$year == i)
+            } else {
+              filter(., .data$year == i & .data[[strata]] == s)
+            }
+           } %>%
+          unique()
+        
+        Syndemics::crc(
+          output,
+          "N_ID",
+          c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
+          formula.selection = "stepwise",
+          method = "poisson",
+          opts.stepwise = list(
+            direction = "forward",
+            verbose = FALSE
+          )
+        )$estimate
+      }
       
-        output <- data %>% 
-        mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>%
-          { if (is.null(strata))
-                filter(., year==i)
-            else
-                filter(., year == i & data[[strata]] == s) } %>% 
-        unique()
+      known <- data %>%
+        {
+          if (is.null(strata)) {
+            filter(., .data$year == i)
+          } else {
+            filter(., .data$year == i & .data[[strata]] == s)
+          }
+        } %>%
+        filter(.data$N_ID != -1) %>%
+        summarise(known = sum(.data$N_ID)) %>%
+        pull(known)
       
-      Syndemics::crc(output, "N_ID", c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
-                     formula.selection = "stepwise", method = "poisson", 
-                     opts.stepwise = list(direction = "forward",
-                                         verbose = FALSE))$estimate
-    } 
-
-    # Calculate summary stats from CRC estimates
-    crcMean <- mean(estimates)
-    crcMin  <- min(estimates)
-    crcMax  <- max(estimates)
-    SE_estimate   <- sd(estimates)
-    estimate.LCI  <- crcMean - 1.96 * SE_estimate
-    estimate.UCI  <- crcMean + 1.96 * SE_estimate
-
-    # Get known sum for that race-year
-    known <- data %>%
-      { if (is.null(strata))
-                filter(., year==i)
-        else
-                filter(., year == i & data[[strata]] == s) } %>% 
-      filter(N_ID != -1) %>%
-      summarise(known = sum(N_ID)) %>%
-      pull(known)
-
-    # Add known to CRC estimates
-    est       <- crcMean + known
-    estMin    <- crcMin  + known
-    estMax    <- crcMax  + known
-    total.LCI <- est - 1.96 * SE_estimate
-    total.UCI <- est + 1.96 * SE_estimate
+      results[[as.character(i)]] <- data.frame(
+        Year = i,
+        Known = known,
+        Estimated = mean(estimates),
+        SE_Estimated = sd(estimates),
+        LCI_Estimated = mean(estimates) - 1.96 * sd(estimates),
+        UCI_Estimated = mean(estimates) + 1.96 * sd(estimates),
+        CRCMin = min(estimates),
+        CRCMax = max(estimates),
+        CRC_Total = mean(estimates) + known,
+        LCI_Total = mean(estimates) + known - 1.96 * sd(estimates),
+        UCI_Total = mean(estimates) + known + 1.96 * sd(estimates)
+      )
+      
+      if (!is.null(strata)) {
+        results[[as.character(i)]]$Demo <- s
+      }
+    }
     
-    results[[as.character(i)]] <- data.frame(
-    Year          = i,
-    Known         = known,
-    Estimated     = crcMean,
-    SE_Estimated  = SE_estimate,
-    
-    LCI_Estimated = estimate.LCI,
-    UCI_Estimated = estimate.UCI,
-    
-    CRCMin       = estMin,
-    CRCMax       = estMax,
-    
-    CRC_Total    = est,
-    LCI_Total    = total.LCI,
-    UCI_Total    = total.UCI
- )
     if (!is.null(strata)) {
-      results[[as.character(i)]]$Demo <-s
+      output_list[[as.character(s)]] <- bind_rows(results)
     }
   }
-   if (!is.null(strata))
-    output_list[[as.character(s)]] <- bind_rows(results)
-}
-
-stopImplicitCluster()
-
-# ## Binding the Output
-if (!is.null(strata))
- output <- bind_rows(output_list)
-else 
- output <- bind_rows(results)
-
-## Arranging the Columns by Year and Group and then converting the Demo Column to character 
-if (!is.null(strata))
-  output <- output %>% arrange(Year,Demo) %>% 
-                     mutate(Demo=as.character(Demo))
-
-return(output)
-}
-
+  stopImplicitCluster()
+  
+  if (!is.null(strata)) {
+    output <- bind_rows(output_list) %>%
+      arrange(Year, Demo) %>%
+      mutate(Demo = as.character(Demo))
+  } else {
+    output <- bind_rows(results)
+  }
+    
+    # Optional: Map demographics via crosswalk
+    if (!is.null(crosswalk)) {
+      output <- output %>%
+        left_join(crosswalk, by = c("Demo" = from_col)) %>%
+        mutate(
+          Demo = .data[[to_col]],
+          Category = category_label
+        ) %>%
+        select(-all_of(to_col))
+    }
+    return(output)
+  }
 ```
 
 # Non-stratified
+```{r non-stratified}
+# Load non-stratified OUD origin data
+data <- read.csv("OUD_Origin_path.csv")
 
-```{r non-stratified, eval=FALSE}
-
-## Loading non-stratified OUD_Origin data
-data <- read.csv("OUD_Origin_path.csv") 
-
-## Calling function run_crc
+# Call the run_crc function
 total_output <- run_crc(data)
 
 # Export to CSV
@@ -152,55 +151,48 @@ write.csv(total_output, "CRCtotal.csv")
 ```
 
 # Stratified
-##Note: For Age, we only use the data stratified according to the groups starting
- at 20 years of age
+```{r stratified}
+# Race
+race_output <- run_crc(
+  data = read.csv("OUDOrigin_race_path.csv"),
+  strata = "final_re",
+  crosswalk = read.csv("RESPOND Crosswalk_race_path.csv"),
+  from_col = "final_re",
+  to_col = "race",
+  category_label = "Race"
+)
 
-```{r eval = FALSE}
+# Age
+age_output <- run_crc(
+  data = read.csv("OUDOrigin_age_twenty_path.csv"),
+  strata = "age_grp_twenty",
+  crosswalk = read.csv("RESPOND Crosswalk_age_twenty_path.csv"),
+  from_col = "age_grp_twenty",
+  to_col = "age_twenty",
+  category_label = "Age"
+)
 
-## Reading the Origin Data Stratified by Race, Age and Sex
-race_data <- read.csv("OUDOrigin_race_path.csv")
-age_data <- readr::read_csv("OUDOrigin_age_twenty_path.csv")
-sex_data <- readr::read_csv("OUDOrigin_sex_path.csv")
+# Sex
+sex_output <- run_crc(
+  data = read.csv("OUDOrigin_sex_path.csv"),
+  strata = "final_sex",
+  crosswalk = read.csv("RESPOND Crosswalk_sex_path.csv"),
+  from_col = "final_sex",
+  to_col = "sex",
+  category_label = "Sex"
+)
 
-## Reading the Crosswalks
-race_xwalk <- readr::read_csv("RESPOND Crosswalk_race_path.csv")
-age_xwalk <- readr::read_csv("RESPOND Crosswalk_age_twenty_path.csv")
-sex_xwalk <- readr::read_csv("RESPOND Crosswalk_sex_path.csv")
-```
-
-```{r eval=FALSE}
-race_output <- run_crc(race_data, 'final_re')
-age_output <- run_crc(age_data, 'age_grp_twenty')
-sex_output <- run_crc(sex_data, 'final_sex')
-```
-
-
-```{r eval=FALSE}
-race_output <- race_output %>%
- left_join(race_xwalk, by = c("Demo" = "final_re")) %>%
- mutate(Demo = race, Category = "Race") %>%
- select(-race)
-
-age_output <- age_output %>%
- left_join(age_xwalk, by = c("Demo" = "age_grp_twenty")) %>%
- mutate(Demo = age_twenty, Category = "Age") %>%
- select(-age_twenty)
-
-sex_output <- sex_output %>%
- left_join(sex_xwalk, by = c("Demo" = "final_sex")) %>%
- mutate(Demo = sex, Category = "Sex") %>%
- select(-sex)
-
+# Combine all
 outputs <- bind_rows(race_output, age_output, sex_output)
-
 ```
 
-```{r eval= FALSE}
-## Binding the output and writing into .csv by year
+```{r bind_output}
+# Bind the output and write to .csv by year
 for (i in unique(data$year)) {
- year_output <- outputs %>%
-   filter(Year == i) %>%
-   select(Category, Demo, everything(), -Year)
- write.csv(year_output, paste0("CRCEstimate_", i, ".csv"), row.names = FALSE)
+  year_output <- outputs %>%
+    filter(Year == i) %>%
+    select(Category, Demo, everything(), -Year)
+  
+  write.csv(year_output, paste0("CRCEstimate_", i, ".csv"), row.names = FALSE)
 }
 ```
