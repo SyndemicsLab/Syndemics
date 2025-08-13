@@ -79,13 +79,13 @@ run_crc <- function(data, strata = NULL, crosswalk = NULL, from_col = NULL,
       known <- data %>%
         {
           if (is.null(strata)) {
-            filter(., .data$year == i)
+            filter(year == i)
           } else {
-            filter(., .data$year == i & .data[[strata]] == s)
+            filter(year == i & .data[[strata]] == s)
           }
         } %>%
-        filter(.data$N_ID != -1) %>%
-        summarise(known = sum(.data$N_ID)) %>%
+        filter(N_ID != -1) %>%
+        summarise(known = sum(N_ID)) %>%
         pull(known)
       
       results[[as.character(i)]] <- data.frame(
