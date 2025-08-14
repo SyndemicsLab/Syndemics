@@ -1,7 +1,7 @@
 Package: Syndemics
 Type: Package
 Title: Syndemics Lab at Boston Medical Center Tools for Interacting with Simulation Models
-Version: 0.2.1
+Version: 0.3.0
 Authors@R: c(person(given = "Ryan",
                     family = "O'Dea",
                     role = c("aut"),
@@ -34,15 +34,12 @@ LazyData: true
 RoxygenNote: 7.3.2
 Imports: 
     data.table,
-    ggcorrplot,
-    ggplot2,
     httr,
     MASS,
     readxl,
-    tidyr,
-    rlist,
     magrittr,
-    dplyr
+    dplyr,
+    ggplot2
 Suggests: 
     knitr,
     rmarkdown
