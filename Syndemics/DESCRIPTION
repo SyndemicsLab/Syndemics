@@ -46,7 +46,8 @@ Imports:
     tidyr,
     rlist,
     magrittr,
-    dplyr
+    dplyr,
+    scales
 Suggests: 
     knitr,
     rmarkdown
