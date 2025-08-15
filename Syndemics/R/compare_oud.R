@@ -11,6 +11,7 @@
 #' @importFrom data.table fread rbindlist
 #' @export
 combine_files <- function(path) {
+  source_file <- NULL
   files <- list.files(path, full.names = TRUE)
   rbindlist(
     lapply(files, function(f) {
@@ -35,6 +36,7 @@ combine_files <- function(path) {
 #' @importFrom scales label_comma
 #' @export
 time_trends <- function(data) {
+  N_ID <- source_file <- total <- NULL
   yearly_totals <- data[, .(total = sum(N_ID, na.rm = TRUE)), by = .(year, source_file)]
 
   p <- ggplot(yearly_totals, aes(x = year, y = total, color = source_file)) +
