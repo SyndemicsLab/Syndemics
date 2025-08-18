@@ -37,7 +37,7 @@ combine_files <- function(path) {
 #' @export
 time_trends <- function(data) {
   N_ID <- source_file <- total <- NULL
-  yearly_totals <- data[, .(total = sum(N_ID, na.rm = TRUE)), by = .(year, source_file)]
+  yearly_totals <- data[, list(total = sum(N_ID, na.rm = TRUE)), by = c(year, source_file)]
 
   p <- ggplot(yearly_totals, aes(x = year, y = total, color = source_file)) +
     geom_line(size = 1) +
@@ -66,7 +66,8 @@ time_trends <- function(data) {
 #' @importFrom data.table dcast
 #' @export
 compare_by_year <- function(data) {
-  yearly_totals <- data[, .(total = sum(N_ID, na.rm = TRUE)), by = .(year, source_file)]
+  N_ID <- total <- source_file <- NULL
+  yearly_totals <- data[, list(total = sum(N_ID, na.rm = TRUE)), by = c(year, source_file)]
   comparison_table <- dcast(yearly_totals, year ~ source_file, value.var = "total")
   print(comparison_table)
   return(comparison_table)
@@ -134,6 +135,7 @@ plot_oud_data <- function(data, group_col, labels, title, legend_title) {
 #' @importFrom scales label_comma
 #' @export
 histogram <- function(data) {
+  N_ID <- NULL
   p <- ggplot(data, aes(x = N_ID)) +
     geom_histogram(bins = 30, fill = "lightblue", color = "black") +
     labs(title = "Distribution of OUD Counts",
