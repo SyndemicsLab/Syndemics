@@ -1,7 +1,7 @@
 Package: Syndemics
 Type: Package
 Title: Syndemics Lab at Boston Medical Center Tools for Interacting with Simulation Models
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: c(person(given = "Ryan",
                     family = "O'Dea",
                     role = c("aut"),
