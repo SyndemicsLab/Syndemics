@@ -20,8 +20,8 @@ Authors@R: c(person(given = "Ryan",
                     email = "hana.zwick@bmc.org"),
              person(given = "Alexandra",
                     family = "Purdy",
-                    role = c("aut"),
-                    email = "alexandra.purdy@bmc.org")) 
+                    role = c("aut")
+                    )) 
 Description: Tools for dynamic simulation modeling and policy analysis of 
     opioid use disorder, HIV, and Hepatitis C epidemics. This package provides 
     workflow functions for interacting with RESPOND simulation models, enabling 
