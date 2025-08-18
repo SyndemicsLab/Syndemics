@@ -71,69 +71,16 @@ compare_by_year <- function(data) {
   print(comparison_table)
   return(comparison_table)
 }
-
-#' Filter for Race-Specific OUD Data
+#' Filter OUD Data by Source File Pattern
 #'
-#' Extracts rows from the dataset corresponding to race-based breakdowns.
-#'
-#' @param data A \code{data.table} containing a \code{source_file} column.
-#'
-#' @return A filtered \code{data.table} containing only race-related data.
-#'
-#' @export
-get_race_data <- function(data) {
-  return(data[grepl("Race", source_file)])
-}
-
-#' Filter for Sex-Specific OUD Data
-#'
-#' Extracts rows from the dataset corresponding to sex-based breakdowns.
+#' Extracts rows from the dataset where the source_file column matches a specified pattern.
 #'
 #' @param data A \code{data.table} containing a \code{source_file} column.
+#' @param pattern A character string containing a regular expression pattern to match 
+#'   against the \code{source_file} column.
+#' @param ignore_case Logical; if TRUE, pattern matching is case-insensitive. Default is TRUE.
 #'
-#' @return A filtered \code{data.table} containing only sex-related data.
-#'
-#' @export
-get_sex_data <- function(data) {
-  return(data[grepl("Sex", source_file)])
-}
-
-#' Filter for Age-Specific OUD Data
-#'
-#' Extracts rows from the dataset corresponding to age-group breakdowns.
-#'
-#' @param data A \code{data.table} containing a \code{source_file} column.
-#'
-#' @return A filtered \code{data.table} containing only age-related data.
-#'
-#' @export
-get_age_data <- function(data) {
-  return(data[grepl("Twenty", source_file)])
-}
-
-#' Filter for Monthly OUD Data
-#'
-#' Extracts rows from the dataset corresponding to monthly breakdowns.
-#'
-#' @param data A \code{data.table} containing a \code{source_file} column.
-#'
-#' @return A filtered \code{data.table} containing only monthly-related data.
-#'
-#' @export
-get_monthly_data <- function(data) {
-  return(data[grepl("Monthly", source_file)])
-}
-
-#' Plot OUD Counts by Race
-#'
-#' Creates a line plot of OUD counts over time, broken down by race.
-#'
-#' @param race_data A \code{data.table} containing \code{year}, \code{N_ID}, and \code{final_re} columns.
-#'
-#' @return A \code{ggplot} object visualizing counts by race.
-#'
-#' @importFrom ggplot2 ggplot aes geom_line geom_point labs scale_y_continuous theme_minimal theme
-#' @importFrom scales label_comma
+#' @return A filtered \code{data.table} containing only rows where source_file matches the pattern.
 #' @export
 plot_race_data <- function(race_data) {
   race_labels <- c("1" = "White", "2" = "Black", "3" = "Asian / Pacific Islander",
