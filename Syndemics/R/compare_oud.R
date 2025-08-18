@@ -82,86 +82,42 @@ compare_by_year <- function(data) {
 #'
 #' @return A filtered \code{data.table} containing only rows where source_file matches the pattern.
 #' @export
-plot_race_data <- function(race_data) {
-  race_labels <- c("1" = "White", "2" = "Black", "3" = "Asian / Pacific Islander",
-                   "4" = "Hispanic", "5" = "Native American / Other")
-  race_totals <- race_data[, .(total = sum(N_ID, na.rm = TRUE)), by = .(year, final_re)]
-  race_totals$race_name <- race_labels[as.character(race_totals$final_re)]
-
-  p <- ggplot(race_totals, aes(x = year, y = total, color = race_name)) +
-    geom_line(size = 1) +
-    geom_point(size = 2) +
-    labs(title = "OUD Counts by Race Over Time",
-         x = "Year",
-         y = "Count",
-         color = "Race") +
-    scale_y_continuous(labels = scales::label_comma()) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
-
-  print(p)
-  return(p)
+get_filtered_data <- function(data, pattern, ignore_case = TRUE) {
+  source_file <- NULL
+  return(data[grepl(pattern, source_file, ignore.case = ignore_case)])
 }
 
-#' Plot OUD Counts by Sex
+#' Plot OUD Counts by Demographic Category
 #'
-#' Creates a line plot of OUD counts over time, broken down by sex.
+#' Creates a line plot of OUD counts over time, broken down by a specified demographic variable.
 #'
-#' @param sex_data A \code{data.table} containing \code{year}, \code{N_ID}, and \code{final_sex} columns.
+#' @param data A \code{data.table} containing \code{year}, \code{N_ID}, and the grouping column.
+#' @param group_col Character string specifying the column name to group by (e.g., "final_re", "final_sex", "age_grp_twenty").
+#' @param labels Named vector mapping group codes to readable labels.
+#' @param title Character string for the plot title.
+#' @param legend_title Character string for the legend title.
 #'
-#' @return A \code{ggplot} object visualizing counts by sex.
+#' @return A \code{ggplot} object visualizing counts by the specified demographic.
 #'
 #' @importFrom ggplot2 ggplot aes geom_line geom_point labs scale_y_continuous theme_minimal theme
 #' @importFrom scales label_comma
 #' @export
-plot_sex_data <- function(sex_data) {
-  sex_labels <- c("1" = "Male", "2" = "Female")
-  sex_totals <- sex_data[, .(total = sum(N_ID, na.rm = TRUE)), by = .(year, final_sex)]
-  sex_totals$sex_name <- sex_labels[as.character(sex_totals$final_sex)]
-
-  p <- ggplot(sex_totals, aes(x = year, y = total, color = sex_name)) +
+plot_oud_data <- function(data, group_col, labels, title, legend_title) {
+  N_ID <- total <- group_name <- NULL
+  totals <- data[, list(total = sum(N_ID, na.rm = TRUE)), by = c("year", group_col)]
+  totals$group_name <- labels[as.character(totals[[group_col]])]
+  
+  p <- ggplot(totals, aes(x = year, y = total, color = group_name)) +
     geom_line(size = 1) +
     geom_point(size = 2) +
-    labs(title = "OUD Counts by Sex Over Time",
+    labs(title = title,
          x = "Year",
          y = "Count",
-         color = "Sex") +
+         color = legend_title) +
     scale_y_continuous(labels = scales::label_comma()) +
     theme_minimal() +
     theme(legend.position = "bottom")
-
-  print(p)
-  return(p)
-}
-
-#' Plot OUD Counts by Age Group
-#'
-#' Creates a line plot of OUD counts over time, broken down by age group.
-#'
-#' @param age_data A \code{data.table} containing \code{year}, \code{N_ID}, and \code{age_grp_twenty} columns.
-#'
-#' @return A \code{ggplot} object visualizing counts by age group.
-#'
-#' @importFrom ggplot2 ggplot aes geom_line geom_point labs scale_y_continuous theme_minimal theme
-#' @importFrom scales label_comma
-#' @export
-plot_age_data <- function(age_data) {
-  age_labels <- c("1" = "0-19 years", "2" = "20-39 years", "3" = "40-59 years",
-                  "4" = "60-79 years", "5" = "80+ years")
-  age_totals <- age_data[, .(total = sum(N_ID, na.rm = TRUE)), by = .(year, age_grp_twenty)]
-  age_totals$age_name <- age_labels[as.character(age_totals$age_grp_twenty)]
-
-  p <- ggplot(age_totals, aes(x = year, y = total, color = age_name)) +
-    geom_line(size = 1) +
-    geom_point(size = 2) +
-    labs(title = "OUD Counts by Age Group Over Time",
-         x = "Year",
-         y = "Count",
-         color = "Age Group") +
-    scale_y_continuous(labels = scales::label_comma()) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
-
+  
   print(p)
   return(p)
 }
