@@ -1,7 +1,7 @@
 Package: Syndemics
 Type: Package
 Title: Syndemics Lab at Boston Medical Center Tools for Interacting with Simulation Models
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: c(person(given = "Ryan",
                     family = "O'Dea",
                     role = c("aut"),
@@ -17,7 +17,11 @@ Authors@R: c(person(given = "Ryan",
              person(given = "Hana",
                     family = "Zwick",
                     role = c("aut"),
-                    email = "hana.zwick@bmc.org")) 
+                    email = "hana.zwick@bmc.org"),
+             person(given = "Alexandra",
+                    family = "Purdy",
+                    role = c("aut")
+                    )) 
 Description: Tools for dynamic simulation modeling and policy analysis of 
     opioid use disorder, HIV, and Hepatitis C epidemics. This package provides 
     workflow functions for interacting with RESPOND simulation models, enabling 
@@ -39,6 +43,7 @@ Imports:
     readxl,
     magrittr,
     dplyr,
+    scales,
     ggplot2
 Suggests: 
     knitr,

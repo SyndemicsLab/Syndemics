@@ -24,6 +24,7 @@ Authors:
   \item Ryan O'Dea \email{ryan.odea@bmc.org}
   \item Dimitri Baptiste \email{dimitri.baptiste@bmc.org}
   \item Hana Zwick \email{hana.zwick@bmc.org}
+  \item Alexandra Purdy \email{alexandra.purdy@bmc.org}
 }
 
 }
