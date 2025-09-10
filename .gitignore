@@ -2,6 +2,7 @@
 .Rhistory
 .Rapp.history
 .DS_Store
+.csv
 
 # Session Data files
 .RData
@@ -48,3 +49,4 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+Syndemics.Rproj

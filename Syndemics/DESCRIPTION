@@ -1,20 +1,53 @@
 Package: Syndemics
 Type: Package
-Title: A collection of miscellaneous functions created for internal use with the Boston Medical Center Syndemics lab
-Version: 0.1.0
-Author: Ryan O'Dea
-Maintainer: Ryan O'Dea <ryanodea@bu.edu>
-Description: The Syndemics Lab is a research unit with Boston Medical Center. Our primary work involves dynamic simulations for predicting and analyzing opioid use disorder, HIV, and HEP-CE. This package is a collection of commonly used workflow functionalizations serving analytic purposes.
+Title: Syndemics Lab at Boston Medical Center Tools for Interacting with Simulation Models
+Version: 0.4.0
+Authors@R: c(person(given = "Ryan",
+                    family = "O'Dea",
+                    role = c("aut"),
+                    email = "ryan.odea@bmc.org"),
+             person(given = "Matthew",
+                    family = "Carroll",
+                    role = c("aut", "cre"),
+                    email = "matthew.carroll@bmc.org"),
+             person(given = "Dimitri", 
+                    family = "Baptiste",
+                    role = c("aut"),
+                    email = "dimitri.baptiste@bmc.org"),
+             person(given = "Hana",
+                    family = "Zwick",
+                    role = c("aut"),
+                    email = "hana.zwick@bmc.org"),
+             person(given = "Alexandra",
+                    family = "Purdy",
+                    role = c("aut")
+                    )) 
+Description: Tools for dynamic simulation modeling and policy analysis of 
+    opioid use disorder, HIV, and Hepatitis C epidemics. This package provides 
+    workflow functions for interacting with RESPOND simulation models, enabling 
+    users to perform simulated costing analysis of different policy interventions 
+    and public health measures. The baseline primary function implements an 
+    extended Capture-Recapture prevalence estimation method 
+    as described in Barocas et al. (2018) doi:10.2105/AJPH.2018.304673, 
+    accessible through the crc function, which estimates total background population. 
+    Additional functions support input preparation and output analysis for dynamic epidemic simulations. 
+    RESPOND models and methodology details available at <https://www.syndemicslab.org/respond>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 Imports: 
     data.table,
-    ggcorrplot,
-    ggplot2,
     httr,
     MASS,
     readxl,
-    tidyr,
-    rlist
+    magrittr,
+    dplyr,
+    scales,
+    ggplot2
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+URL: https://github.com/SyndemicsLab/Syndemics
+BugReports: https://github.com/SyndemicsLab/Syndemics/issues

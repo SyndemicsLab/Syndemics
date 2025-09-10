@@ -1,0 +1,193 @@
+---
+title: "Running the CRC"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Running the CRC}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+# Capture Recapture Estimation
+
+Capture recapture (CRC) estimation derives from ecological studies where the entire population may not be observed at one time. However, by taking different estimates over time we can form an educated guess about the size of $N$. The nuance in this case, is the formation of 'multi-systems estimation' as an approach to the CRC, where instead of gathering information over time, we gather information which is spatially linked, allowing us to build a guess to the size of $N$ from longitudinally linked data.
+
+## What is CRC ?
+In the backend, CRC is really just running a stepwise negative binomial or poisson linear regression using these linked database counts as covariables. In the current implementation, CRC produces an estimate given a single year of data (within a given subgroup). What this means is, given data of OUD Origin (derived from the PHD), you must loop through the years to derive the $N$ for that year. For subgroup analysis you must loop through both year AND stratification.
+
+## Some Issues
+As we stratify further and further, we begin to see a lot of suppression - where the PHD mandates we remove the counts due to danger of identification. Because this mandate affects counts between 1:10, we perturb the data iteratively and build confidence intervals around our estimates.
+
+```{r run_crc}
+run_crc <- function(data, strata = NULL, crosswalk = NULL, from_col = NULL, 
+                    to_col = NULL, category_label = NULL, 
+                    seed = 2025, nboot = 1000, ci = 0.95) {
+  library(dplyr)
+  library(doParallel)
+  library(foreach)
+  library(Syndemics)
+  
+  n_cores <- detectCores() - 1
+  z_score <- qnorm(1 - (1 - ci) / 2)
+  subgroup <- if (!is.null(strata)) unique(data[[strata]]) else 1L
+  
+  unique_years <- unique(data$year)
+  results <- list()
+  output_list <- list()
+  
+  registerDoParallel(n_cores)
+  
+  for (s in subgroup) {
+    for (i in unique_years) {
+      estimates <- foreach(
+        j = 1:nboot,
+        .combine = "rbind",
+        .packages = c("dplyr", "Syndemics")
+        ) %dopar% {
+        set.seed(seed + j)
+        output <- data %>%
+         mutate(N_ID = ifelse(N_ID == -1, round(runif(nrow(.), 1, 10)), N_ID)) %>% 
+           {
+            if (is.null(strata)) {
+              filter(., .data$year == i)
+            } else {
+              filter(., .data$year == i & .data[[strata]] == s)
+            }
+           } %>%
+          unique()
+        
+        Syndemics::crc(
+          output,
+          "N_ID",
+          c("Casemix", "APCD", "BSAS", "PMP", "Matris", "Death"),
+          formula.selection = "stepwise",
+          method = "poisson",
+          opts.stepwise = list(
+            direction = "forward",
+            verbose = FALSE
+          )
+        )$estimate
+      }
+      
+      known <- data %>%
+        {
+          if (is.null(strata)) {
+            filter(year == i)
+          } else {
+            filter(year == i & .data[[strata]] == s)
+          }
+        } %>%
+        filter(N_ID != -1) %>%
+        summarise(known = sum(N_ID)) %>%
+        pull(known)
+      
+      results[[as.character(i)]] <- data.frame(
+        Year = i,
+        Known = known,
+        Estimated = mean(estimates),
+        SE_Estimated = sd(estimates),
+        LCI_Estimated = mean(estimates) - z_score * sd(estimates),
+        UCI_Estimated = mean(estimates) + z_score * sd(estimates),
+        CRC_Total = mean(estimates) + known,
+        LCI_Total = mean(estimates) + known - z_score * sd(estimates),
+        UCI_Total = mean(estimates) + known + z_score * sd(estimates)
+      )
+      
+      if (!is.null(strata)) {
+        results[[as.character(i)]]$Demo <- s
+      }
+    }
+    
+    if (!is.null(strata)) {
+      output_list[[as.character(s)]] <- bind_rows(results)
+    }
+  }
+  stopImplicitCluster()
+  
+  if (!is.null(strata)) {
+    output <- bind_rows(output_list) %>%
+      arrange(Year, Demo) %>%
+      mutate(Demo = as.character(Demo))
+  } else {
+    output <- bind_rows(results)
+  }
+    
+    # Optional: Map demographics via crosswalk
+    if (!is.null(crosswalk)) {
+      output <- output %>%
+        left_join(crosswalk, by = c("Demo" = from_col)) %>%
+        mutate(
+          Demo = .data[[to_col]],
+          Category = category_label
+        ) %>%
+        select(-all_of(to_col))
+    }
+    return(output)
+  }
+```
+
+# Non-stratified
+```{r non-stratified}
+# Load non-stratified OUD origin data
+data <- read.csv("OUD_Origin_path.csv")
+
+# Call the run_crc function
+total_output <- run_crc(data)
+
+# Export to CSV
+write.csv(total_output, "CRCtotal.csv")
+```
+
+# Stratified
+```{r stratified}
+# Race
+race_output <- run_crc(
+  data = read.csv("OUDOrigin_race_path.csv"),
+  strata = "final_re",
+  crosswalk = read.csv("RESPOND Crosswalk_race_path.csv"),
+  from_col = "final_re",
+  to_col = "race",
+  category_label = "Race"
+)
+
+# Age
+age_output <- run_crc(
+  data = read.csv("OUDOrigin_age_twenty_path.csv"),
+  strata = "age_grp_twenty",
+  crosswalk = read.csv("RESPOND Crosswalk_age_twenty_path.csv"),
+  from_col = "age_grp_twenty",
+  to_col = "age_twenty",
+  category_label = "Age"
+)
+
+# Sex
+sex_output <- run_crc(
+  data = read.csv("OUDOrigin_sex_path.csv"),
+  strata = "final_sex",
+  crosswalk = read.csv("RESPOND Crosswalk_sex_path.csv"),
+  from_col = "final_sex",
+  to_col = "sex",
+  category_label = "Sex"
+)
+
+# Combine all
+outputs <- bind_rows(race_output, age_output, sex_output)
+```
+
+```{r bind_output}
+# Bind the output and write to .csv by year
+for (i in unique(data$year)) {
+  year_output <- outputs %>%
+    filter(Year == i) %>%
+    select(Category, Demo, everything(), -Year)
+  
+  write.csv(year_output, paste0("CRCEstimate_", i, ".csv"), row.names = FALSE)
+}
+```
