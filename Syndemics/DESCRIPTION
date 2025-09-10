@@ -35,7 +35,7 @@ Description: Tools for dynamic simulation modeling and policy analysis of
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports: 
     data.table,
     httr,
