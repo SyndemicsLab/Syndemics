@@ -38,14 +38,19 @@ LazyData: true
 RoxygenNote: 7.3.3
 Imports: 
     data.table,
+    dplyr,
+    ggplot2,
     httr,
+    magrittr,
     MASS,
     readxl,
-    magrittr,
-    dplyr,
     scales,
-    ggplot2
+    stats,
+    tibble,
+    utils
 Suggests: 
+    doParallel,
+    foreach,
     knitr,
     rmarkdown
 VignetteBuilder: knitr
