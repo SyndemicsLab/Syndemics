@@ -7,7 +7,7 @@
 #' @param data_path Character. Path to the directory containing the .rdata files.
 #'
 #' @return Numeric. Average number of filtered admissions per month.
-#' @importFrom tidyverse as_tibble
+#' @importFrom tibble as_tibble
 #' @export
 #'
 #' @examples
@@ -55,5 +55,3 @@ process_teds_year <- function(year, data_path) {
   # Return monthly admissions number
   return(nrow(teds_final) / 12)
 }
-
-
