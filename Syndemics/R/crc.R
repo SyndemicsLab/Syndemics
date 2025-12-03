@@ -17,87 +17,108 @@
 #' @importFrom stats AIC coef confint formula glm poisson
 #' @export
 
-crc <- function(data, freq.column, binary.variables, method = "poisson", formula.selection = "stepwise", formula = NULL,
-                opts.stepwise = list(
-                  direction = "both",
-                  threshold = 0.05,
-                  verbose = TRUE
-                )) {
-  if (!(method %in% c("poisson", "negbin"))) {
-    stop("Method must be either 'poisson' or 'negbin'")
-  }
-
-  if (!(formula.selection %in% c("aic", "stepwise"))) {
-    stop("Formula selection must be either 'aic' or 'stepwise'")
-  }
-
-  dt <- setDT(data)
-
-  if (is.null(formula)) {
-    if (formula.selection == "aic") {
-      form <- formula_list(freq.column, binary.variables)
-    } else if (formula.selection == "stepwise") {
-      form <- NULL
+crc <- function(
+    data,
+    freq.column,
+    binary.variables,
+    method = "poisson",
+    formula.selection = "stepwise",
+    formula = NULL,
+    opts.stepwise = list(
+        direction = "both",
+        threshold = 0.05,
+        verbose = TRUE
+    )
+) {
+    if (!(method %in% c("poisson", "negbin"))) {
+        stop("Method must be either 'poisson' or 'negbin'")
     }
-  } else if (!is.formula(formula)) {
-    stop("Expected Formula Object when Specifying Formula")
-  } else {
-    form <- formula
-  }
 
-  if (formula.selection == "aic") {
-    results <- list()
+    if (!(formula.selection %in% c("aic", "stepwise"))) {
+        stop("Formula selection must be either 'aic' or 'stepwise'")
+    }
 
-    for (i in seq_along(form)) {
-      result <- tryCatch({
-        if (method == "poisson") {
-          model <- stats::glm(form[[i]], data = dt, family = "poisson")
-        } else {
-          model <- MASS::glm.nb(formula = form[[i]], data = dt)
+    dt <- setDT(data)
+
+    if (is.null(formula)) {
+        if (formula.selection == "aic") {
+            form <- formula_list(freq.column, binary.variables)
+        } else if (formula.selection == "stepwise") {
+            form <- NULL
+        }
+    } else if (!is.formula(formula)) {
+        stop("Expected Formula Object when Specifying Formula")
+    } else {
+        form <- formula
+    }
+
+    if (formula.selection == "aic") {
+        results <- list()
+
+        for (i in seq_along(form)) {
+            result <- tryCatch(
+                {
+                    if (method == "poisson") {
+                        model <- stats::glm(
+                            form[[i]],
+                            data = dt,
+                            family = "poisson"
+                        )
+                    } else {
+                        model <- MASS::glm.nb(formula = form[[i]], data = dt)
+                    }
+
+                    intercept <- exp(stats::coef(model)["(Intercept)"])
+                    aic <- stats::AIC(model)
+
+                    ci <- suppressMessages(stats::confint(
+                        model,
+                        "(Intercept)",
+                        level = 0.95
+                    ))
+                    lower_ci <- exp(ci[1])
+                    upper_ci <- exp(ci[2])
+
+                    data.frame(
+                        formula = paste(deparse(form[[i]]), collapse = " "),
+                        estimate = round(intercept, 2),
+                        AIC = round(aic, 2),
+                        lower_ci = unname(round(lower_ci, 2)),
+                        upper_ci = unname(round(upper_ci, 2)),
+                        error = NA,
+                        row.names = NULL
+                    )
+                },
+                error = function(e) {
+                    data.frame(
+                        formula = paste(deparse(form[[i]]), collapse = " "),
+                        estimate = NA,
+                        AIC = NA,
+                        lower_ci = NA,
+                        upper_ci = NA,
+                        error = toString(e$message),
+                        row.names = NULL
+                    )
+                }
+            )
+
+            results[[i]] <- result
         }
 
-        intercept <- exp(stats::coef(model)["(Intercept)"])
-        aic <- stats::AIC(model)
-
-        ci <- suppressMessages(stats::confint(model, "(Intercept)", level = 0.95))
-        lower_ci <- exp(ci[1])
-        upper_ci <- exp(ci[2])
-
-        data.frame(
-          formula = paste(deparse(form[[i]]), collapse = " "),
-          estimate = round(intercept, 2),
-          AIC = round(aic, 2),
-          lower_ci = unname(round(lower_ci, 2)),
-          upper_ci = unname(round(upper_ci, 2)),
-          error = NA,
-          row.names = NULL
+        model <- do.call(rbind, results)
+        model <- model[order(model$AIC), ]
+    } else if (formula.selection == "stepwise") {
+        model <- step_regression(
+            data,
+            freq.column,
+            binary.variables,
+            p.threshold = opts.stepwise$threshold,
+            direction = opts.stepwise$direction,
+            method = method,
+            verbose = opts.stepwise$verbose,
+            k = 2
         )
-      }, error = function(e) {
-        data.frame(
-          formula = paste(deparse(form[[i]]), collapse = " "),
-          estimate = NA,
-          AIC = NA,
-          lower_ci = NA,
-          upper_ci = NA,
-          error = toString(e$message),
-          row.names = NULL
-        )
-      })
-
-      results[[i]] <- result
     }
 
-    model <- do.call(rbind, results)
-    model <- model[order(model$AIC), ]
-
-  } else if (formula.selection == "stepwise") {
-    model <- step_regression(data, freq.column, binary.variables,
-                             p.threshold = opts.stepwise$threshold,
-                             direction = opts.stepwise$direction,
-                             method = method,
-                             verbose = opts.stepwise$verbose,
-                             k = 2)
-  }
-
-  return(model)
+    return(model)
 }

@@ -24,20 +24,25 @@
 #'
 #' @export
 loadOutputFiles <- function(N, outputFileNames, pathPrefix = "") {
-  # append the trailing slash if the prefix does not already
-  if (pathPrefix != "" && !endsWith(pathPrefix, "/")) {
-    pathPrefix <- paste0(pathPrefix, "/")
-  }
-  outputNumbers <- 1:N
-  outputTables <- list()
-  # read files and store them in outputTables
-  for (index in seq_along(outputNumbers)) {
-    outputFolder <- paste0("output", index)
-    currentOutputTables <- list()
-    for (outputFile in outputFileNames) {
-      currentOutputTables[[outputFile]] <- read.csv(paste0(pathPrefix, outputFolder, "/", outputFile))
+    # append the trailing slash if the prefix does not already
+    if (pathPrefix != "" && !endsWith(pathPrefix, "/")) {
+        pathPrefix <- paste0(pathPrefix, "/")
     }
-    outputTables[[outputFolder]] <- currentOutputTables
-  }
-  return(outputTables)
+    outputNumbers <- 1:N
+    outputTables <- list()
+    # read files and store them in outputTables
+    for (index in seq_along(outputNumbers)) {
+        outputFolder <- paste0("output", index)
+        currentOutputTables <- list()
+        for (outputFile in outputFileNames) {
+            currentOutputTables[[outputFile]] <- read.csv(paste0(
+                pathPrefix,
+                outputFolder,
+                "/",
+                outputFile
+            ))
+        }
+        outputTables[[outputFolder]] <- currentOutputTables
+    }
+    return(outputTables)
 }

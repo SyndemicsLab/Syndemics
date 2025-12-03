@@ -14,21 +14,31 @@
 #' @importFrom utils write.csv
 #' @export
 
-build_background_mortality_file <- function(files,
-                                            outputfile,
-                                            races = c("black", "hispanic", "white"),
-                                            sexes = c("female", "male"),
-                                            age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100"),
-                                            bin_size = 20) {
+build_background_mortality_file <- function(
+    files,
+    outputfile,
+    races = c("black", "hispanic", "white"),
+    sexes = c("female", "male"),
+    age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100"),
+    bin_size = 20
+) {
+    background_mortality <- lapply(
+        files,
+        extract_background_mortality,
+        bin_size = bin_size,
+        age_groups = age_groups
+    )
+    result_table <- create_and_fill_table(
+        background_mortality,
+        races,
+        sexes,
+        age_groups
+    )
+    if (!missing(outputfile)) {
+        write.csv(result_table, outputfile, row.names = FALSE)
+    }
 
-  background_mortality <- lapply(files, extract_background_mortality,
-                                 bin_size = bin_size, age_groups = age_groups)
-  result_table <- create_and_fill_table(background_mortality, races, sexes, age_groups)
-  if (!missing(outputfile)) {
-    write.csv(result_table, outputfile, row.names = FALSE)
-  }
-
-  return(result_table)
+    return(result_table)
 }
 
 #' Function used to extract background mortality values based on age from a single yearly CDC NVSS life table
@@ -41,33 +51,48 @@ build_background_mortality_file <- function(files,
 #' @importFrom readxl read_excel
 #' @keywords internal
 
-extract_background_mortality <- function(file_path, bin_size = 20, age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100")) {
-  data <- readxl::read_excel(file_path, skip = 1)
-  dt <- as.data.table(data)[(2:101)]
+extract_background_mortality <- function(
+    file_path,
+    bin_size = 20,
+    age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100")
+) {
+    data <- readxl::read_excel(file_path, skip = 1)
+    dt <- as.data.table(data)[(2:101)]
 
-  # Rename columns to standard names
-  setnames(dt, "Probability of dying between ages x and x + 1", "year_prob", skip_absent = TRUE)
-  setnames(dt, "Number dying between ages x and x + 1", "year_deaths", skip_absent = TRUE)
-  
-  #Data table bindings
-  year_prob <- year_deaths <- V1 <- NULL
+    # Rename columns to standard names
+    setnames(
+        dt,
+        "Probability of dying between ages x and x + 1",
+        "year_prob",
+        skip_absent = TRUE
+    )
+    setnames(
+        dt,
+        "Number dying between ages x and x + 1",
+        "year_deaths",
+        skip_absent = TRUE
+    )
 
-  dt[, year_prob := as.numeric(year_prob)
-     ][, year_deaths := as.numeric(year_deaths)]
+    #Data table bindings
+    year_prob <- year_deaths <- V1 <- NULL
 
-  bin_groups <- (seq(nrow(dt)) - 1) %/% bin_size
-  deaths_by_group <- dt[, sum(year_deaths), by = bin_groups][, V1]
+    dt[, year_prob := as.numeric(year_prob)][,
+        year_deaths := as.numeric(year_deaths)
+    ]
 
-  # 100k originates from the CDC NVSS data - reported in rates per 100,000 persons
-  weekly_rates <- (deaths_by_group / 100000) / 52
-  weekly_probs <- 1 - exp(-weekly_rates)
+    bin_groups <- (seq(nrow(dt)) - 1) %/% bin_size
+    deaths_by_group <- dt[, sum(year_deaths), by = bin_groups][, V1]
 
-  result <- data.table(
-    agegrp = age_groups,
-    weekly_probability = weekly_probs
-  )
+    # 100k originates from the CDC NVSS data - reported in rates per 100,000 persons
+    weekly_rates <- (deaths_by_group / 100000) / 52
+    weekly_probs <- 1 - exp(-weekly_rates)
 
-  return(result)
+    result <- data.table(
+        agegrp = age_groups,
+        weekly_probability = weekly_probs
+    )
+
+    return(result)
 }
 
 #' Create and fill the table with mortality values for all demographic combinations
@@ -80,29 +105,38 @@ extract_background_mortality <- function(file_path, bin_size = 20, age_groups = 
 #' @import data.table
 #' @keywords internal
 
-create_and_fill_table <- function(background_mortality,
-                                  races = c("black", "hispanic", "white"),
-                                  sexes = c("female", "male"),
-                                  age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100")) {
-  #Data table bindings
-  agegrp <- NULL
-  
-  combinations <- expand.grid(races = races, sexes = sexes, stringsAsFactors = FALSE)
-  combinations <- as.data.table(combinations)
-  result_table <- combinations[rep(seq_len(nrow(combinations)), each = length(age_groups))]
-  result_table[, agegrp := rep(age_groups, times = nrow(combinations))]
-  n_race_sex_combos <- length(races) * length(sexes)
+create_and_fill_table <- function(
+    background_mortality,
+    races = c("black", "hispanic", "white"),
+    sexes = c("female", "male"),
+    age_groups = c("1_20", "21_40", "41_60", "61_80", "81_100")
+) {
+    #Data table bindings
+    agegrp <- NULL
 
-  mortality_data <- data.table()
-  for (i in seq_along(background_mortality)) {
-    group_index <- ((i - 1) %% n_race_sex_combos) + 1
-    bg_mort <- background_mortality[[i]]
-    demo_info <- combinations[group_index]
-    mortality_group <- cbind(demo_info[rep(1, nrow(bg_mort))], bg_mort)
-    mortality_data <- rbind(mortality_data, mortality_group)
-  }
+    combinations <- expand.grid(
+        races = races,
+        sexes = sexes,
+        stringsAsFactors = FALSE
+    )
+    combinations <- as.data.table(combinations)
+    result_table <- combinations[rep(
+        seq_len(nrow(combinations)),
+        each = length(age_groups)
+    )]
+    result_table[, agegrp := rep(age_groups, times = nrow(combinations))]
+    n_race_sex_combos <- length(races) * length(sexes)
 
-  setorder(mortality_data, races, sexes, agegrp)
+    mortality_data <- data.table()
+    for (i in seq_along(background_mortality)) {
+        group_index <- ((i - 1) %% n_race_sex_combos) + 1
+        bg_mort <- background_mortality[[i]]
+        demo_info <- combinations[group_index]
+        mortality_group <- cbind(demo_info[rep(1, nrow(bg_mort))], bg_mort)
+        mortality_data <- rbind(mortality_data, mortality_group)
+    }
 
-  return(mortality_data)
+    setorder(mortality_data, races, sexes, agegrp)
+
+    return(mortality_data)
 }

@@ -11,16 +11,16 @@
 #' @importFrom data.table fread rbindlist
 #' @export
 combine_files <- function(path) {
-  source_file <- NULL
-  files <- list.files(path, full.names = TRUE)
-  rbindlist(
-    lapply(files, function(f) {
-      d <- fread(f)
-      d[, source_file := basename(f)]
-      d
-    }),
-    fill = TRUE
-  )
+    source_file <- NULL
+    files <- list.files(path, full.names = TRUE)
+    rbindlist(
+        lapply(files, function(f) {
+            d <- fread(f)
+            d[, source_file := basename(f)]
+            d
+        }),
+        fill = TRUE
+    )
 }
 
 #' Plot OUD Counts Over Time
@@ -36,22 +36,27 @@ combine_files <- function(path) {
 #' @importFrom scales label_comma
 #' @export
 time_trends <- function(data) {
-  N_ID <- source_file <- total <- NULL
-  yearly_totals <- data[, list(total = sum(N_ID, na.rm = TRUE)), by = c(year, source_file)]
+    N_ID <- source_file <- total <- NULL
+    yearly_totals <- data[,
+        list(total = sum(N_ID, na.rm = TRUE)),
+        by = c(year, source_file)
+    ]
 
-  p <- ggplot(yearly_totals, aes(x = year, y = total, color = source_file)) +
-    geom_line(size = 1) +
-    geom_point(size = 2) +
-    labs(title = "OUD Counts Over Time",
-         x = "Year",
-         y = "Total Count",
-         color = "Data Source") +
-    scale_y_continuous(labels = scales::label_comma()) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
+    p <- ggplot(yearly_totals, aes(x = year, y = total, color = source_file)) +
+        geom_line(size = 1) +
+        geom_point(size = 2) +
+        labs(
+            title = "OUD Counts Over Time",
+            x = "Year",
+            y = "Total Count",
+            color = "Data Source"
+        ) +
+        scale_y_continuous(labels = scales::label_comma()) +
+        theme_minimal() +
+        theme(legend.position = "bottom")
 
-  print(p)
-  return(p)
+    print(p)
+    return(p)
 }
 
 #' Compare Annual OUD Counts Across Files
@@ -66,26 +71,33 @@ time_trends <- function(data) {
 #' @importFrom data.table dcast
 #' @export
 compare_by_year <- function(data) {
-  N_ID <- total <- source_file <- NULL
-  yearly_totals <- data[, list(total = sum(N_ID, na.rm = TRUE)), by = c(year, source_file)]
-  comparison_table <- dcast(yearly_totals, year ~ source_file, value.var = "total")
-  print(comparison_table)
-  return(comparison_table)
+    N_ID <- total <- source_file <- NULL
+    yearly_totals <- data[,
+        list(total = sum(N_ID, na.rm = TRUE)),
+        by = c(year, source_file)
+    ]
+    comparison_table <- dcast(
+        yearly_totals,
+        year ~ source_file,
+        value.var = "total"
+    )
+    print(comparison_table)
+    return(comparison_table)
 }
 #' Filter OUD Data by Source File Pattern
 #'
 #' Extracts rows from the dataset where the source_file column matches a specified pattern.
 #'
 #' @param data A \code{data.table} containing a \code{source_file} column.
-#' @param pattern A character string containing a regular expression pattern to match 
+#' @param pattern A character string containing a regular expression pattern to match
 #'   against the \code{source_file} column.
 #' @param ignore_case Logical; if TRUE, pattern matching is case-insensitive. Default is TRUE.
 #'
 #' @return A filtered \code{data.table} containing only rows where source_file matches the pattern.
 #' @export
 get_filtered_data <- function(data, pattern, ignore_case = TRUE) {
-  source_file <- NULL
-  return(data[grepl(pattern, source_file, ignore.case = ignore_case)])
+    source_file <- NULL
+    return(data[grepl(pattern, source_file, ignore.case = ignore_case)])
 }
 
 #' Plot OUD Counts by Demographic Category
@@ -104,23 +116,23 @@ get_filtered_data <- function(data, pattern, ignore_case = TRUE) {
 #' @importFrom scales label_comma
 #' @export
 plot_oud_data <- function(data, group_col, labels, title, legend_title) {
-  N_ID <- total <- group_name <- NULL
-  totals <- data[, list(total = sum(N_ID, na.rm = TRUE)), by = c("year", group_col)]
-  totals$group_name <- labels[as.character(totals[[group_col]])]
-  
-  p <- ggplot(totals, aes(x = year, y = total, color = group_name)) +
-    geom_line(size = 1) +
-    geom_point(size = 2) +
-    labs(title = title,
-         x = "Year",
-         y = "Count",
-         color = legend_title) +
-    scale_y_continuous(labels = scales::label_comma()) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
-  
-  print(p)
-  return(p)
+    N_ID <- total <- group_name <- NULL
+    totals <- data[,
+        list(total = sum(N_ID, na.rm = TRUE)),
+        by = c("year", group_col)
+    ]
+    totals$group_name <- labels[as.character(totals[[group_col]])]
+
+    p <- ggplot(totals, aes(x = year, y = total, color = group_name)) +
+        geom_line(size = 1) +
+        geom_point(size = 2) +
+        labs(title = title, x = "Year", y = "Count", color = legend_title) +
+        scale_y_continuous(labels = scales::label_comma()) +
+        theme_minimal() +
+        theme(legend.position = "bottom")
+
+    print(p)
+    return(p)
 }
 
 #' Histogram of OUD Counts
@@ -135,15 +147,17 @@ plot_oud_data <- function(data, group_col, labels, title, legend_title) {
 #' @importFrom scales label_comma
 #' @export
 histogram <- function(data) {
-  N_ID <- NULL
-  p <- ggplot(data, aes(x = N_ID)) +
-    geom_histogram(bins = 30, fill = "lightblue", color = "black") +
-    labs(title = "Distribution of OUD Counts",
-         x = "Count",
-         y = "Frequency") +
-    scale_y_continuous(labels = scales::label_comma()) +
-    theme_minimal()
+    N_ID <- NULL
+    p <- ggplot(data, aes(x = N_ID)) +
+        geom_histogram(bins = 30, fill = "lightblue", color = "black") +
+        labs(
+            title = "Distribution of OUD Counts",
+            x = "Count",
+            y = "Frequency"
+        ) +
+        scale_y_continuous(labels = scales::label_comma()) +
+        theme_minimal()
 
-  print(p)
-  return(p)
+    print(p)
+    return(p)
 }

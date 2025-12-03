@@ -5,8 +5,8 @@
 #'
 #' @export
 
-is.formula <- function(x){
-  inherits(x, "formula")
+is.formula <- function(x) {
+    inherits(x, "formula")
 }
 
 #' Generates All Possible Combination of Interaction Terms
@@ -20,33 +20,45 @@ is.formula <- function(x){
 #' @export
 
 formula_list <- function(y, x) {
-  n <- length(x)
-  all_formulas <- list()
+    n <- length(x)
+    all_formulas <- list()
 
-  for (i in 1:n) {
-    all_formulas <- c(all_formulas, paste0(y, "~", x[i]))
-  }
-
-  for (i in 2:n) {
-    combinations <- combn(x, i)
-    for (j in 1:ncol(combinations)) {
-      combination <- combinations[,j]
-
-      all_formulas <- c(all_formulas, paste0(y, "~", paste(combination, collapse="+")))
-      interaction_formula <- paste(combination, collapse="*")
-      all_formulas <- c(all_formulas, paste0(y, "~", interaction_formula))
-
-      for (k in 1:(i-1)) {
-        combinations_additive <- combn(combination, k)
-        for (l in 1:ncol(combinations_additive)) {
-          combination_additive <- combinations_additive[,l]
-          all_formulas <- c(all_formulas, paste0(y, "~", paste(combination_additive, collapse="+"), "+", interaction_formula))
-        }
-      }
+    for (i in 1:n) {
+        all_formulas <- c(all_formulas, paste0(y, "~", x[i]))
     }
-  }
 
-  return(lapply(unique(all_formulas), as.formula))
+    for (i in 2:n) {
+        combinations <- combn(x, i)
+        for (j in 1:ncol(combinations)) {
+            combination <- combinations[, j]
+
+            all_formulas <- c(
+                all_formulas,
+                paste0(y, "~", paste(combination, collapse = "+"))
+            )
+            interaction_formula <- paste(combination, collapse = "*")
+            all_formulas <- c(all_formulas, paste0(y, "~", interaction_formula))
+
+            for (k in 1:(i - 1)) {
+                combinations_additive <- combn(combination, k)
+                for (l in 1:ncol(combinations_additive)) {
+                    combination_additive <- combinations_additive[, l]
+                    all_formulas <- c(
+                        all_formulas,
+                        paste0(
+                            y,
+                            "~",
+                            paste(combination_additive, collapse = "+"),
+                            "+",
+                            interaction_formula
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    return(lapply(unique(all_formulas), as.formula))
 }
 
 #' Helper function for stepwise regression
@@ -64,50 +76,68 @@ formula_list <- function(y, x) {
 #' @importFrom utils capture.output
 #' @importFrom stats AIC coef confint formula glm poisson step
 
-step_regression <- function(data, y, x, method = "poisson", direction = "both",
-                            p.threshold = 0.05, k = 2, verbose = TRUE) {
-  formula_init <- as.formula(paste(y, "~", paste(x, collapse = " + ")))
-  formula_max <- as.formula(paste(y, "~ (", paste(x, collapse = " + "), ")^", k))
+step_regression <- function(
+    data,
+    y,
+    x,
+    method = "poisson",
+    direction = "both",
+    p.threshold = 0.05,
+    k = 2,
+    verbose = TRUE
+) {
+    formula_init <- as.formula(paste(y, "~", paste(x, collapse = " + ")))
+    formula_max <- as.formula(paste(
+        y,
+        "~ (",
+        paste(x, collapse = " + "),
+        ")^",
+        k
+    ))
 
-  if (!verbose) {
-    capture.output({
-      if (method == "poisson") {
-        init_mod <- glm(formula_init, family = poisson, data = data)
-      } else {
-        init_mod <- MASS::glm.nb(formula_init, data = data)
-      }
+    if (!verbose) {
+        capture.output({
+            if (method == "poisson") {
+                init_mod <- glm(formula_init, family = poisson, data = data)
+            } else {
+                init_mod <- MASS::glm.nb(formula_init, data = data)
+            }
 
-      final_mod <- suppressWarnings(step(init_mod,
-                                         scope = list(upper = formula_max, lower = formula_init),
-                                         direction = direction,
-                                         k = log(nrow(data))))
-    })
-  } else {
-    if (method == "poisson") {
-      init_mod <- glm(formula_init, family = poisson, data = data)
+            final_mod <- suppressWarnings(step(
+                init_mod,
+                scope = list(upper = formula_max, lower = formula_init),
+                direction = direction,
+                k = log(nrow(data))
+            ))
+        })
     } else {
-      init_mod <- MASS::glm.nb(formula_init, data = data)
+        if (method == "poisson") {
+            init_mod <- glm(formula_init, family = poisson, data = data)
+        } else {
+            init_mod <- MASS::glm.nb(formula_init, data = data)
+        }
+
+        final_mod <- step(
+            init_mod,
+            scope = list(upper = formula_max, lower = formula_init),
+            direction = direction,
+            k = log(nrow(data))
+        )
     }
 
-    final_mod <- step(init_mod,
-                      scope = list(upper = formula_max, lower = formula_init),
-                      direction = direction,
-                      k = log(nrow(data)))
-  }
+    intercept <- coef(final_mod)[1]
+    estimate <- exp(intercept)
+    ci <- exp(confint(final_mod)[1, ])
 
-  intercept <- coef(final_mod)[1]
-  estimate <- exp(intercept)
-  ci <- exp(confint(final_mod)[1, ])
+    results <- list(
+        model = method,
+        formula = formula(final_mod),
+        summary = summary(final_mod),
+        estimate = unname(round(estimate, 2)),
+        lower_ci = unname(round(ci[1], 2)),
+        upper_ci = unname(round(ci[2], 2)),
+        AIC = AIC(final_mod)
+    )
 
-  results <- list(
-    model = method,
-    formula = formula(final_mod),
-    summary = summary(final_mod),
-    estimate = unname(round(estimate, 2)),
-    lower_ci = unname(round(ci[1], 2)),
-    upper_ci = unname(round(ci[2], 2)),
-    AIC = AIC(final_mod)
-  )
-
-  return(results)
+    return(results)
 }
