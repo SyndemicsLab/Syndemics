@@ -9,7 +9,7 @@ get_filtered_data(data, pattern, ignore_case = TRUE)
 \arguments{
 \item{data}{A \code{data.table} containing a \code{source_file} column.}
 
-\item{pattern}{A character string containing a regular expression pattern to match 
+\item{pattern}{A character string containing a regular expression pattern to match
 against the \code{source_file} column.}
 
 \item{ignore_case}{Logical; if TRUE, pattern matching is case-insensitive. Default is TRUE.}
