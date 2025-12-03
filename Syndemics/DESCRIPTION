@@ -52,7 +52,9 @@ Suggests:
     doParallel,
     foreach,
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 URL: https://github.com/SyndemicsLab/Syndemics
 BugReports: https://github.com/SyndemicsLab/Syndemics/issues
+Config/testthat/edition: 3
