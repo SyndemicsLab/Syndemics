@@ -3,3 +3,4 @@
 ^LICENSE\.md$
 ^\.github$
 inst/data
+.air.toml

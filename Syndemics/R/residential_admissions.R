@@ -8,6 +8,7 @@
 #'
 #' @return Numeric. Average number of filtered admissions per month.
 #' @importFrom tibble as_tibble
+#' @importFrom dplyr filter
 #' @export
 #'
 #' @examples

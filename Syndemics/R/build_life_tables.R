@@ -80,7 +80,7 @@ extract_background_mortality <- function(
         year_deaths := as.numeric(year_deaths)
     ]
 
-    bin_groups <- (seq(nrow(dt)) - 1) %/% bin_size
+    bin_groups <- (seq_len(nrow(dt)) - 1) %/% bin_size
     deaths_by_group <- dt[, sum(year_deaths), by = bin_groups][, V1]
 
     # 100k originates from the CDC NVSS data - reported in rates per 100,000 persons
