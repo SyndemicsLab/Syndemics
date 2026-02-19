@@ -46,10 +46,10 @@ get_init_cohort_statistics <- function(db_path) {
 
     init_cohort_table <- bind_rows(
         age_stats,
-        sex_stats,
+        gender_stats,
         drug_behavior_stats,
         fibrosis_stats,
-        hcv_id_stats,
+        hcv_identification_stats,
         link_state_stats
     ) |>
         select(variable, level, statistic, value) |>
