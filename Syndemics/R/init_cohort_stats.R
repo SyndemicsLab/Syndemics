@@ -10,8 +10,9 @@
 #'
 #' @importFrom DBI dbConnect dbDisconnect
 #' @importFrom RSQLite SQLite
-#' @importFrom dplyr tbl summarise group_by mutate transmute select
+#' @importFrom dplyr tbl summarise group_by mutate select
 #' bind_rows collect
+#' @importFrom purrr map_dfr
 #' @export
 get_init_cohort_statistics <- function(db_path, table_name) {
     con <- dbConnect(SQLite(), db_path)
