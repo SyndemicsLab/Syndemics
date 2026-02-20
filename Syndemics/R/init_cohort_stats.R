@@ -4,6 +4,8 @@
 #' descriptive statistics (average age, proportion male, drug behavior
 #' distribution, fibrosis state distribution, etc).
 #' @param db_path Path where the inputs.db file is saved
+#' @param table_name Name of the initial cohort table in the
+#' input.db file (e.g., init_cohort, population)
 #' @return A table with descriptive statistics of the initial cohort
 #'
 #' @importFrom DBI dbConnect dbDisconnect
@@ -11,11 +13,11 @@
 #' @importFrom dplyr tbl summarise group_by mutate transmute select
 #' bind_rows collect
 #' @export
-get_init_cohort_statistics <- function(db_path) {
+get_init_cohort_statistics <- function(db_path, table_name) {
     con <- dbConnect(SQLite(), db_path)
     on.exit(dbDisconnect(con), add = TRUE)
 
-    cohort <- tbl(con, "init_cohort")
+    cohort <- tbl(con, "table_name")
 
     age_stats <- cohort |>
         summarise(value = mean(age_months, na.rm = TRUE) / 12) |>
