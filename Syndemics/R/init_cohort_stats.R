@@ -17,7 +17,7 @@ get_init_cohort_statistics <- function(db_path, table_name) {
     con <- dbConnect(SQLite(), db_path)
     on.exit(dbDisconnect(con), add = TRUE)
 
-    cohort <- tbl(con, "table_name")
+    cohort <- tbl(con, table_name)
 
     age_stats <- cohort |>
         summarise(value = mean(age_months, na.rm = TRUE) / 12) |>
@@ -27,36 +27,40 @@ get_init_cohort_statistics <- function(db_path, table_name) {
             statistic = "mean"
         )
 
-    prop_breakdown <- function(var_name) {
-        prop_breakdown <- cohort |>
-            group_by(.data[[var_name]]) |>
-            summarise(n = n(), .groups = "drop") |>
-            mutate(value = n / sum(n)) |>
-            transmute(
-                variable = var_name,
-                level = as.character(.data[[var_name]]),
-                statistic = "proportion",
-                value
-            )
-        return(prop_breakdown)
-    }
+    var_names <- c(
+        "gender",
+        "drug_behavior",
+        "fibrosis_state",
+        "identified_as_hcv_positive",
+        "link_state"
+    )
 
-    sex_stats <- prop_breakdown("gender")
-    drug_behavior_stats <- prop_breakdown("drug_behavior")
-    fibrosis_stats <- prop_breakdown("fibrosis_state")
-    hcv_id_stats <- prop_breakdown("identified_as_hcv_positive")
-    link_state_stats <- prop_breakdown("link_state")
-
-    init_cohort_table <- bind_rows(
-        age_stats,
-        gender_stats,
-        drug_behavior_stats,
-        fibrosis_stats,
-        hcv_identification_stats,
-        link_state_stats
-    ) |>
+    init_cohort_table <- map_dfr(var_names, prop_breakdown, cohort = cohort) |>
         select(variable, level, statistic, value) |>
         collect()
 
     return(init_cohort_table)
+}
+
+#' @description This function calculates the proportion breakdown of a given
+#' variable in the initial cohort.
+#' @param var_name The name of the variable for which to calculate the
+#' proportion breakdown.
+#' @param cohort The initial cohort data frame (as a dplyr table) from which to
+#' calculate the proportion breakdown.
+#' @return A table with the proportion breakdown of the specified value.
+#' @importFrom dplyr group_by, summarize, mutate, transmute
+#' @keywords internal
+prop_breakdown <- function(var_name, cohort) {
+    prop_breakdown <- cohort |>
+        group_by(.data[[var_name]]) |>
+        summarize(n = n(), .groups = "drop") |>
+        mutate(
+            value = n / sum(n),
+            variable = var_name,
+            level = as.character(.data[[var_name]]),
+            statistic = "proportion",
+            .keep = "none"
+        )
+    return(prop_breakdown)
 }
