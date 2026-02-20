@@ -1,7 +1,8 @@
-#' @description This function connects to an inputs.db file using SQLite,  looks
-#' at the init_cohort table, and pulls descriptive statistics (average age,
-#' proportion male, drug behavior distribution, fibrosis state
-#' distribution, etc)
+#' @description This function get descriptive statistics of the initial cohort
+#' for HEP-CE projects. It does this by connecting to an inputs.db file
+#' using SQLite, looking at the init_cohort table, and pulling
+#' descriptive statistics (average age, proportion male, drug behavior
+#' distribution, fibrosis state distribution, etc).
 #' @param db_path Path where the inputs.db file is saved
 #' @return A table with descriptive statistics of the initial cohort
 #'
