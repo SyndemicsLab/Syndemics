@@ -53,7 +53,7 @@ get_init_cohort_statistics <- function(db_path, table_name) {
 #' @param cohort The initial cohort data frame (as a dplyr table) from which to
 #' calculate the proportion breakdown.
 #' @return A table with the proportion breakdown of the specified value.
-#' @importFrom dplyr group_by, summarize, mutate, transmute
+#' @importFrom dplyr group_by summarise mutate transmute
 #' @keywords internal
 prop_breakdown <- function(var_name, cohort) {
     prop_breakdown <- cohort |>
