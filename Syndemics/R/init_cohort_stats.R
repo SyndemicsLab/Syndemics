@@ -39,8 +39,8 @@ get_init_cohort_statistics <- function(db_path, table_name) {
 
     init_cohort_table <- map_dfr(var_names, prop_breakdown, cohort = cohort) |>
         select(variable, level, statistic, value) |>
-        collect() |>
-        bind_rows(age_stats)
+        collect()
+    init_cohort_table <- bind_rows(init_cohort_table, age_stats)
 
     return(init_cohort_table)
 }
