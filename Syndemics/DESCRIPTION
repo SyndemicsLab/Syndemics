@@ -50,14 +50,14 @@ Imports:
     utils,
     purrr,
     DBI,
-    RSQLite,
-    dbplyr
+    RSQLite
 Suggests:
     doParallel,
     foreach,
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    dbplyr
 VignetteBuilder: knitr
 URL: https://github.com/SyndemicsLab/Syndemics
 BugReports: https://github.com/SyndemicsLab/Syndemics/issues

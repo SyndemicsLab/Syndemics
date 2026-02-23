@@ -13,7 +13,7 @@
 #' @importFrom RSQLite SQLite
 #' @importFrom dplyr tbl summarize group_by mutate select
 #' bind_rows collect
-#' @importFrom purrr map_dfr modify
+#' @importFrom purrr map_dfr
 #' @export
 get_init_cohort_statistics <- function(db_path, table_name) {
     con <- dbConnect(SQLite(), db_path)
