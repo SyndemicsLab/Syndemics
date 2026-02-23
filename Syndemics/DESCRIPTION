@@ -50,7 +50,8 @@ Imports:
     utils,
     purrr,
     DBI,
-    RSQLite
+    RSQLite,
+    dbplyr
 Suggests:
     doParallel,
     foreach,

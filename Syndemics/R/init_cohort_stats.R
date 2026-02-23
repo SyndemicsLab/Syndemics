@@ -27,7 +27,8 @@ get_init_cohort_statistics <- function(db_path, table_name) {
             variable = "age",
             level = "mean_years",
             statistic = "mean"
-        )
+        ) |>
+        as.data.frame()
 
     var_names <- c(
         "gender",
@@ -39,10 +40,9 @@ get_init_cohort_statistics <- function(db_path, table_name) {
 
     init_cohort_table <-
         map_dfr(var_names, prop_breakdown, cohort = cohort) |>
-        select(variable, level, statistic, value)
-        ## collect()
-
-        ## bind_rows(age_stats)
+        select(variable, level, statistic, value) |>
+        collect() |>
+        bind_rows(age_stats)
 
     return(init_cohort_table)
 }
@@ -67,6 +67,7 @@ prop_breakdown <- function(var_name, cohort) {
             level = as.character(.data[[var_name]]),
             statistic = "proportion",
             .keep = "none"
-        )
-    return(as.data.frame(prop_breakdown))
+        ) |>
+        as.data.frame()
+    return(prop_breakdown)
 }
