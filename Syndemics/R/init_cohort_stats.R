@@ -11,7 +11,7 @@
 #'
 #' @importFrom DBI dbConnect dbDisconnect
 #' @importFrom RSQLite SQLite
-#' @importFrom dplyr tbl summarise group_by mutate select
+#' @importFrom dplyr tbl summarize group_by mutate select
 #' bind_rows collect
 #' @importFrom purrr map_dfr
 #' @export
@@ -22,7 +22,7 @@ get_init_cohort_statistics <- function(db_path, table_name) {
     cohort <- tbl(con, table_name)
 
     age_stats <- cohort |>
-        summarise(value = mean(age_months, na.rm = TRUE) / 12) |>
+        summarize(value = mean(age_months, na.rm = TRUE) / 12) |>
         mutate(
             variable = "age",
             level = "mean_years",
@@ -53,7 +53,7 @@ get_init_cohort_statistics <- function(db_path, table_name) {
 #' @param cohort The initial cohort data frame (as a dplyr table) from which to
 #' calculate the proportion breakdown.
 #' @return A table with the proportion breakdown of the specified value.
-#' @importFrom dplyr group_by summarise mutate transmute
+#' @importFrom dplyr group_by summarize mutate transmute
 #' @keywords internal
 prop_breakdown <- function(var_name, cohort) {
     prop_breakdown <- cohort |>
