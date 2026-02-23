@@ -40,10 +40,8 @@ get_init_cohort_statistics <- function(db_path, table_name) {
     init_cohort_table <-
         purrr::modify(var_names, prop_breakdown, cohort = cohort) |>
         select(variable, level, statistic, value) |>
-        collect()
-    print(typeof(init_cohort_table))
-    print(init_cohort_table)
-    ## init_cohort_table <- bind_rows(data.frame(init_cohort_table), age_stats)
+        collect() |>
+        bind_rows(age_stats)
 
     return(init_cohort_table)
 }
@@ -63,11 +61,11 @@ prop_breakdown <- function(var_name, cohort) {
         group_by(.data[[var_name]]) |>
         summarize(n = n(), .groups = "drop") |>
         mutate(
-            value = n / sum(n),
+            value = as.double(n / sum(n)),
             variable = var_name,
             level = as.character(.data[[var_name]]),
             statistic = "proportion",
             .keep = "none"
         )
-    return(prop_breakdown)
+    return(as.data.frame(prop_breakdown))
 }
