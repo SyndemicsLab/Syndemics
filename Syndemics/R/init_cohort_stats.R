@@ -38,7 +38,7 @@ get_init_cohort_statistics <- function(db_path, table_name) {
     )
 
     init_cohort_table <-
-        purrr::modify(var_names, prop_breakdown, cohort = cohort) |>
+        purrr::map_dfr(var_names, prop_breakdown, cohort = cohort) |>
         select(variable, level, statistic, value) |>
         collect() |>
         bind_rows(age_stats)
