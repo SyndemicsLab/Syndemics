@@ -13,7 +13,7 @@
 #' @importFrom RSQLite SQLite
 #' @importFrom dplyr tbl summarize group_by mutate select
 #' bind_rows collect
-#' @importFrom purrr map_dfr
+#' @importFrom purrr map_dfr modify
 #' @export
 get_init_cohort_statistics <- function(db_path, table_name) {
     con <- dbConnect(SQLite(), db_path)
@@ -37,10 +37,13 @@ get_init_cohort_statistics <- function(db_path, table_name) {
         "link_state"
     )
 
-    init_cohort_table <- map_dfr(var_names, prop_breakdown, cohort = cohort) |>
+    init_cohort_table <-
+        purrr::modify(var_names, prop_breakdown, cohort = cohort) |>
         select(variable, level, statistic, value) |>
         collect()
-    init_cohort_table <- bind_rows(init_cohort_table, age_stats)
+    print(typeof(init_cohort_table))
+    print(init_cohort_table)
+    ## init_cohort_table <- bind_rows(data.frame(init_cohort_table), age_stats)
 
     return(init_cohort_table)
 }
