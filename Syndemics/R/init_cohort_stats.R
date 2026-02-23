@@ -1,4 +1,5 @@
-#' @description This function get descriptive statistics of the initial cohort
+#' Get descriptive initial cohort statistics
+#' @description This function gets descriptive statistics of the initial cohort
 #' for HEP-CE projects. It does this by connecting to an inputs.db file
 #' using SQLite, looking at the init_cohort table, and pulling
 #' descriptive statistics (average age, proportion male, drug behavior
@@ -44,6 +45,7 @@ get_init_cohort_statistics <- function(db_path, table_name) {
     return(init_cohort_table)
 }
 
+#' Break down the initial cohort into proportions
 #' @description This function calculates the proportion breakdown of a given
 #' variable in the initial cohort.
 #' @param var_name The name of the variable for which to calculate the
