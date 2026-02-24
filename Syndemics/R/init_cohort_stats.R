@@ -60,9 +60,9 @@ get_init_cohort_statistics <- function(db_path, table_name) {
 prop_breakdown <- function(var_name, cohort) {
     prop_breakdown <- cohort |>
         group_by(.data[[var_name]]) |>
-        summarize(n = n(na.rm = TRUE), .groups = "drop") |>
+        summarize(n = n(), .groups = "drop") |>
         mutate(
-            value = as.double(n) / sum(n),
+            value = as.double(n) / sum(n, na.rm = TRUE),
             variable = var_name,
             level = as.character(.data[[var_name]]),
             statistic = "proportion",
